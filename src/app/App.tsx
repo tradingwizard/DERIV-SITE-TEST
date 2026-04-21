@@ -18,6 +18,7 @@ const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
 const FreeBots = lazy(() => import('../pages/free-bots'));
 const AnalysisTool = lazy(() => import('../pages/analysis-tool'));
+const Home = lazy(() => import('../pages/home'));
 
 const { TRANSLATIONS_CDN_URL, R2_PROJECT_NAME, CROWDIN_BRANCH_NAME } = process.env;
 const i18nInstance = initializeI18n({
@@ -38,8 +39,8 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const router = createBrowserRouter(
     createRoutesFromElements(
+        <>
         <Route
-            path='/'
             element={
                 <SuspenseWrapper>
                     <TranslationProvider defaultLang='EN' i18nInstance={i18nInstance}>
@@ -53,13 +54,23 @@ const router = createBrowserRouter(
                 </SuspenseWrapper>
             }
         >
-            {/* All child routes will be passed as children to Layout */}
-            <Route index element={<AppRoot />} />
+            {/* App routes wrapped in the trading Layout */}
+            <Route path='dashboard' element={<AppRoot />} />
             <Route path='endpoint' element={<Endpoint />} />
             <Route path='callback' element={<CallbackPage />} />
             <Route path='free-bots' element={<FreeBots />} />
             <Route path='analysis-tool' element={<AnalysisTool />} />
         </Route>
+        <Route
+            key='home'
+            path='/'
+            element={
+                <SuspenseWrapper>
+                    <Home />
+                </SuspenseWrapper>
+            }
+        />
+        </>
     )
 );
 
