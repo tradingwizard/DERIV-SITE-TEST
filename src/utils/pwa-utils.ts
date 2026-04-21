@@ -1,7 +1,7 @@
 import { isFirefox, isSafari } from '@/components/shared/utils/browser/browser_detect';
 import { localize } from '@deriv-com/translations';
 
-// PWA Utilities for Deriv Bot
+// PWA Utilities for GTS Empire
 export interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[];
     readonly userChoice: Promise<{

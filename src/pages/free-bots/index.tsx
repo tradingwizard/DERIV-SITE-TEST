@@ -16,96 +16,96 @@ interface Bot {
 const BOTS: Bot[] = [
     {
         id: '1',
-        name: 'Expert Speed Bot',
-        description: 'Advanced speed trading bot with optimized entry and exit points for quick trades.',
+        name: 'Empire Velocity',
+        description: 'High-frequency execution engine engineered for rapid entries and disciplined exits.',
         fileName: '2_2025_Updated_Expert_Speed_Bot_Version_📉📉📉📈📈📈_1_1_1765711647656.xml',
         category: 'Speed Trading',
         icon: '⚡',
     },
     {
         id: '2',
-        name: 'Candle Mine Bot',
-        description: 'Analyzes candlestick patterns to identify profitable trading opportunities.',
+        name: 'Sovereign Candle',
+        description: 'Reads candlestick structure to surface only the highest-conviction trade setups.',
         fileName: '3_2025_Updated_Version_Of_Candle_Mine🇬🇧_1765711647657.xml',
         category: 'Pattern Analysis',
         icon: '🕯️',
     },
     {
         id: '3',
-        name: 'Accumulators Pro Bot',
-        description: 'Professional accumulator strategy bot for consistent growth trading.',
+        name: 'Crown Accumulator',
+        description: 'Professional accumulator playbook designed for compounding, low-drawdown growth.',
         fileName: 'Accumulators_Pro_Bot_1765711647657.xml',
         category: 'Accumulators',
         icon: '📈',
     },
     {
         id: '4',
-        name: 'AI Entry Point Bot',
-        description: 'AI-powered bot that identifies optimal entry points for maximum profit.',
+        name: 'Empire Vision AI',
+        description: 'AI-driven entry detection that pinpoints the optimal moment to commit capital.',
         fileName: 'AI_with_Entry_Point_1765711647658.xml',
         category: 'AI Trading',
         icon: '🤖',
     },
     {
         id: '5',
-        name: 'Alex Speed Bot EXPRO2',
-        description: 'Enhanced speed trading bot with advanced algorithms for rapid execution.',
+        name: 'Imperial Strike',
+        description: 'Refined speed-trading algorithm built for clean execution under volatile conditions.',
         fileName: 'ALEXSPEEDBOT__EXPRO2_(2)_(1)_1765711647659.xml',
         category: 'Speed Trading',
         icon: '🚀',
     },
     {
         id: '6',
-        name: 'Alpha AI Two Predictions',
-        description: 'Dual prediction AI system for higher accuracy in market forecasting.',
+        name: 'Apex Dual Forecast',
+        description: 'Dual-prediction AI engine that cross-verifies signals for higher confidence trades.',
         fileName: 'Alpha_Ai_Two_Predictions__1765711647659.xml',
         category: 'AI Trading',
         icon: '🎯',
     },
     {
         id: '7',
-        name: 'Auto C4 Volt Premium',
-        description: 'Premium automated trading bot with advanced market analysis features.',
+        name: 'Empire Voltage Premium',
+        description: 'Flagship automation suite with deep market analytics and adaptive risk control.',
         fileName: 'AUTO_C4_VOLT_🇬🇧_2_🇬🇧_AI_PREMIUM_ROBOT_(2)_(1)_1765711647660.xml',
         category: 'Premium',
         icon: '⚡',
     },
     {
         id: '8',
-        name: 'Binary Flipper AI Plus',
-        description: 'AI-enhanced binary options trading bot with flip strategy optimization.',
+        name: 'Crimson Flip AI',
+        description: 'Intelligent flip-strategy engine that adapts position sizing in real time.',
         fileName: 'BINARY_FLIPPER_AI_ROBOT_PLUS_+_1765711647660.xml',
         category: 'AI Trading',
         icon: '🔄',
     },
     {
         id: '9',
-        name: 'Binarytool Wizard AI',
-        description: 'Intelligent trading wizard with multiple strategy implementations.',
+        name: 'Empire Wizard AI',
+        description: 'Multi-strategy intelligence engine that selects the best approach per market regime.',
         fileName: 'BINARYTOOL_WIZARD_AI_BOT_1765711647661.xml',
         category: 'AI Trading',
         icon: '🧙',
     },
     {
         id: '10',
-        name: 'Binarytool Differ V2.0',
-        description: 'Version 2.0 differ bot with improved accuracy and performance.',
+        name: 'Sovereign Differ V2',
+        description: 'Refined differ-strategy bot with sharper accuracy and tighter risk parameters.',
         fileName: 'BINARYTOOL@_DIFFER_V2.0_(1)_(1)_1765711647662.xml',
         category: 'Differ',
         icon: '📊',
     },
     {
         id: '11',
-        name: 'Even Odd Thunder AI Pro',
-        description: 'Professional even/odd prediction bot with thunder-fast execution.',
+        name: 'Thunder Parity Pro',
+        description: 'Premium even/odd predictor delivering rapid signals with disciplined execution.',
         fileName: 'BINARYTOOL@EVEN_ODD_THUNDER_AI_PRO_BOT_1765711647662.xml',
         category: 'Even/Odd',
         icon: '⚡',
     },
     {
         id: '12',
-        name: 'Even & Odd AI Bot',
-        description: 'Smart AI bot specialized in even and odd digit predictions.',
+        name: 'Royal Parity AI',
+        description: 'Smart even/odd specialist tuned for consistency across digit volatility cycles.',
         fileName: 'BINARYTOOL@EVEN&ODD_AI_BOT_(2)_1765711647663.xml',
         category: 'Even/Odd',
         icon: '🎲',
@@ -157,9 +157,9 @@ const FreeBots = observer(() => {
     return (
         <div className='free-bots'>
             <div className='free-bots__header'>
-                <h1 className='free-bots__title'>Free Trading Bots</h1>
+                <h1 className='free-bots__title'>The GTS Empire Bot Vault</h1>
                 <p className='free-bots__subtitle'>
-                    Explore our collection of pre-built trading bots. Click on any bot to load it into the Bot Builder.
+                    Hand-curated automation strategies, ready to deploy. Tap any bot to load it straight into the Builder.
                 </p>
             </div>
 

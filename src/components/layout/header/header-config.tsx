@@ -8,11 +8,11 @@ import {
     LegacyReportsIcon as ReportsLogo,
 } from '@deriv/quill-icons/Legacy';
 import {
-    DerivProductBrandLightDerivBotLogoWordmarkIcon as DerivBotLogo,
     DerivProductBrandLightDerivTraderLogoWordmarkIcon as DerivTraderLogo,
     PartnersProductBrandLightSmarttraderLogoWordmarkIcon as SmarttraderLogo,
 } from '@deriv/quill-icons/Logo';
 import { localize } from '@deriv-com/translations';
+import { GtsEmpireLogo } from './gts-empire-logo';
 
 export type PlatformsConfig = {
     active: boolean;
@@ -53,10 +53,10 @@ export const platformsConfig: PlatformsConfig[] = [
     },
     {
         active: true,
-        buttonIcon: <DerivBotLogo height={25} width={94} />,
-        description: localize('Automated trading at your fingertips. No coding needed.'),
+        buttonIcon: <GtsEmpireLogo height={22} />,
+        description: localize('AI-powered automated options trading. No coding needed.'),
         href: standalone_routes.bot,
-        icon: <DerivBotLogo height={32} width={121} />,
+        icon: <GtsEmpireLogo height={28} />,
         showInEU: false,
     },
     {
