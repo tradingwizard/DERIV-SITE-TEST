@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import IntroSplash from '@/components/intro-splash/intro-splash';
-import heroLightbulb from './assets/hero-lightbulb.png';
-import featureBulbChart from './assets/feature-bulb-chart.png';
+import heroLightbulb from './assets/hero-trading.png';
+import featureBulbChart from './assets/feature-chart.png';
 import sectionDesk from './assets/section-desk.png';
 import './home.scss';
 
@@ -154,7 +154,7 @@ const Home = () => {
                     </div>
                     <div className='gts-home__hero-visual'>
                         <div className='gts-home__hero-visual-bg' aria-hidden='true' />
-                        <img src={heroLightbulb} alt='A glowing lightbulb above an open hand' />
+                        <img src={heroLightbulb} alt='AI-driven trading chart with rising candles' />
                         <div className='gts-home__hero-badge'>
                             <span className='gts-home__hero-badge-label'>Live</span>
                             <span className='gts-home__hero-badge-text'>
@@ -205,7 +205,7 @@ const Home = () => {
             <section className='gts-home__showcase'>
                 <div className='gts-home__container gts-home__showcase-grid'>
                     <div className='gts-home__showcase-image'>
-                        <img src={featureBulbChart} alt='Lightbulb with rising chart filament' />
+                        <img src={featureBulbChart} alt='Premium trading chart on dark glass' />
                     </div>
                     <div className='gts-home__showcase-copy'>
                         <span className='gts-home__eyebrow'>Why It Works</span>
