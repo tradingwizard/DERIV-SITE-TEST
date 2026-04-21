@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import IntroSplash from '@/components/intro-splash/intro-splash';
 import heroLightbulb from './assets/hero-lightbulb.png';
 import featureBulbChart from './assets/feature-bulb-chart.png';
 import sectionDesk from './assets/section-desk.png';
@@ -81,6 +82,7 @@ const Home = () => {
 
     return (
         <div className='gts-home'>
+            <IntroSplash storageKey='gts_intro_home_v1' />
             <header className='gts-home__nav'>
                 <div className='gts-home__container gts-home__nav-inner'>
                     <div className='gts-home__brand'>
@@ -90,6 +92,13 @@ const Home = () => {
                     <nav className='gts-home__nav-links'>
                         <a href='#features'>Platform</a>
                         <a href='#how'>How it works</a>
+                        <a
+                            href='https://www.gtsempire.com/software/'
+                            target='_blank'
+                            rel='noopener noreferrer'
+                        >
+                            Premium
+                        </a>
                         <a href='#testimonials'>Traders</a>
                     </nav>
                     <button className='gts-home__nav-cta' onClick={goToApp}>
@@ -99,6 +108,7 @@ const Home = () => {
             </header>
 
             <section className='gts-home__hero'>
+                <div className='gts-home__hero-glow' aria-hidden='true' />
                 <div className='gts-home__container gts-home__hero-grid'>
                     <div className='gts-home__hero-copy'>
                         <span className='gts-home__eyebrow'>
@@ -108,10 +118,10 @@ const Home = () => {
                             The smarter way to <em>trade options</em>.
                         </h1>
                         <p className='gts-home__subhead'>
-                            GTS Empire is a refined automated trading platform for serious options
-                            traders. Deploy AI-driven strategies in minutes, remove emotion from
-                            every decision, and let intelligent execution build your edge — quietly,
-                            consistently, around the clock.
+                            GTS Empire is a refined automated trading platform for serious
+                            options traders. Deploy AI-driven strategies in minutes, remove
+                            emotion from every decision, and let intelligent execution build your
+                            edge — quietly, consistently, around the clock.
                         </p>
                         <div className='gts-home__hero-actions'>
                             <button className='gts-home__cta-primary' onClick={goToApp}>
@@ -124,9 +134,22 @@ const Home = () => {
                                 See how it works
                             </a>
                         </div>
-                        <div className='gts-home__hero-trust'>
-                            <span className='gts-home__pulse' aria-hidden='true' />
-                            Built for traders who value precision over noise.
+                        <div className='gts-home__hero-meta'>
+                            <div className='gts-home__hero-trust'>
+                                <span className='gts-home__pulse' aria-hidden='true' />
+                                Built for traders who value precision over noise.
+                            </div>
+                            <div className='gts-home__powered'>
+                                <span className='gts-home__powered-label'>Powered by</span>
+                                <a
+                                    className='gts-home__powered-name'
+                                    href='https://deriv.com'
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                >
+                                    Deriv
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <div className='gts-home__hero-visual'>
@@ -283,7 +306,15 @@ const Home = () => {
                         <span className='gts-home__brand-mark'>GTS</span>
                         <span className='gts-home__brand-name'>EMPIRE</span>
                     </div>
-                    <p>© {new Date().getFullYear()} GTS Empire. All rights reserved.</p>
+                    <div className='gts-home__footer-meta'>
+                        <p>© {new Date().getFullYear()} GTS Empire. All rights reserved.</p>
+                        <p className='gts-home__footer-powered'>
+                            Powered by{' '}
+                            <a href='https://deriv.com' target='_blank' rel='noopener noreferrer'>
+                                Deriv
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </footer>
         </div>

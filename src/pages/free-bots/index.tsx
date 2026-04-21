@@ -157,9 +157,9 @@ const FreeBots = observer(() => {
     return (
         <div className='free-bots'>
             <div className='free-bots__header'>
-                <h1 className='free-bots__title'>The GTS Empire Bot Vault</h1>
+                <h1 className='free-bots__title'>GTS Empire Free Tools</h1>
                 <p className='free-bots__subtitle'>
-                    Hand-curated automation strategies, ready to deploy. Tap any bot to load it straight into the Builder.
+                    Hand-curated automation strategies, free for the Empire. Tap any tool to load it straight into the Builder.
                 </p>
             </div>
 

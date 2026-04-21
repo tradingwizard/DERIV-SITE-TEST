@@ -95,4 +95,5 @@ export const standalone_routes = {
     responsible: `${getDerivDomain('derivCom')}/responsible/`,
     free_bots: `${window.location.origin}/free-bots`,
     analysis_tool: `${window.location.origin}/analysis-tool`,
+    premium_tools: `${window.location.origin}/premium-tools`,
 };

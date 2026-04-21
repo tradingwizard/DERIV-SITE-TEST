@@ -93,12 +93,18 @@ export const MenuItems: MenuItemsConfig[] = [
         as: 'a',
         href: standalone_routes.free_bots,
         icon: <RobotLogo iconSize='xs' />,
-        label: localize('Free Bots'),
+        label: localize('Free Tools'),
     },
     {
         as: 'a',
         href: standalone_routes.analysis_tool,
         icon: <AnalyticsLogo iconSize='xs' />,
         label: localize('Analysis Tool'),
+    },
+    {
+        as: 'a',
+        href: standalone_routes.premium_tools,
+        icon: <AnalyticsLogo iconSize='xs' />,
+        label: localize('Premium Tools'),
     },
 ];

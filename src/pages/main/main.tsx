@@ -37,6 +37,7 @@ const ChartWrapper = lazy(() => import('../chart/chart-wrapper'));
 const Tutorial = lazy(() => import('../tutorials'));
 const FreeBots = lazy(() => import('../free-bots'));
 const AnalysisTool = lazy(() => import('../analysis-tool'));
+const PremiumTools = lazy(() => import('../premium-tools'));
 
 const AppWrapper = observer(() => {
     const { connectionStatus } = useApiBase();
@@ -68,7 +69,7 @@ const AppWrapper = observer(() => {
     const { clear } = summary_card;
     const { DASHBOARD, BOT_BUILDER } = DBOT_TABS;
     const init_render = React.useRef(true);
-    const hash = ['dashboard', 'bot_builder', 'chart', 'tutorial', 'free_bots', 'analysis_tool'];
+    const hash = ['dashboard', 'bot_builder', 'chart', 'tutorial', 'free_bots', 'analysis_tool', 'premium_tools'];
     const { isDesktop } = useDevice();
     const location = useLocation();
     const navigate = useNavigate();
@@ -360,7 +361,7 @@ const AppWrapper = observer(() => {
                                             width='24px'
                                             fill='var(--text-general)'
                                         />
-                                        <Localize i18n_default_text='Free Bots' />
+                                        <Localize i18n_default_text='Free Tools' />
                                     </>
                                 }
                                 id='id-free-bots'
@@ -395,6 +396,29 @@ const AppWrapper = observer(() => {
                                         }
                                     >
                                         <AnalysisTool />
+                                    </Suspense>
+                                </div>
+                            </div>
+                            <div
+                                label={
+                                    <>
+                                        <LabelPairedChartLineCaptionRegularIcon
+                                            height='24px'
+                                            width='24px'
+                                            fill='var(--text-general)'
+                                        />
+                                        <Localize i18n_default_text='Premium Tools' />
+                                    </>
+                                }
+                                id='id-premium-tools'
+                            >
+                                <div className='premium-tools-wrapper'>
+                                    <Suspense
+                                        fallback={
+                                            <ChunkLoader message={localize('Please wait, loading premium tools...')} />
+                                        }
+                                    >
+                                        <PremiumTools />
                                     </Suspense>
                                 </div>
                             </div>
