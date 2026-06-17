@@ -13,23 +13,25 @@ stores, services) unchanged.
 **Why:** The new platform is required for the live app; the legacy WS `authorize`
 message flow no longer exists there.
 
-## Core model differences (how to apply)
-- **Auth is server-side PKCE.** Token exchange (`/oauth2/token` on auth.deriv.com)
-  is form-encoded and MUST run on a backend — never in the browser. A small Express
-  server (`server/`) does the exchange and proxies authenticated REST calls
-  (account list + WS OTP) so the browser only ever holds the access token.
-- **WS auth is OTP-in-URL, not an `authorize` message.** Flow: REST get accounts →
-  REST get OTP WS url for the active account → connect to that url. The adapter
-  *synthesizes* a legacy-shaped `authorize` response (account_list/balance/etc.)
-  from the REST account data so callers that expect `authorize.account_list` work.
-- **Public/market data uses a separate public WS** so logged-out users still get
-  ticks/active_symbols.
-- **Field renames** must be translated both directions in the adapter:
-  active_symbols `symbol→underlying_symbol`, `pip→pip_size`,
-  `display_name→underlying_symbol_name`, `symbol_type→underlying_symbol_type`;
-  market/submarket display names are gone (rebuild via a humanize map). proposal/buy/
-  poc drop `loginid`, numeric fields may arrive as strings (coerce them), poc
-  `exit_spot→sell_spot`.
+## Core model differences (durable decisions)
+- **Auth must be server-side PKCE.** The new token endpoint is form-encoded and
+  (per Deriv docs) must be exchanged from a backend, never the browser — so this
+  fork ships a small Express server that also proxies the authenticated REST calls.
+  **Why:** browser-side token exchange is not supported; treat the backend as a
+  required part of the architecture, not optional scope.
+- **WS auth is OTP-in-URL, not an `authorize` message.** The active account's
+  authenticated WS URL is obtained over REST, then connected to directly. Because
+  the rest of the app still expects a legacy `authorize.account_list` shape, the
+  adapter synthesizes that response from REST account data.
+- **A DerivAPIBasic-compatible adapter is the seam.** Keep the full legacy method
+  surface the app calls directly (convenience methods + send/onMessage/forget/
+  connection facade). Missing methods cause synchronous `.then`-on-undefined
+  crashes during post-login bootstrap — verify parity whenever app code adds a new
+  `api_base.api.*` call.
+- **Field names differ between new and legacy and are translated in the adapter.**
+  **Why:** the new platform renamed several active_symbols/proposal/poc fields and
+  dropped market display names; downstream code is unchanged and relies on the
+  legacy names.
 
 ## TMB must be forced OFF for this fork
 `useTMB` defaults come from Deriv's Firebase remote config and its session endpoint

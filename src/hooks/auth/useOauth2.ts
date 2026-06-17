@@ -66,6 +66,20 @@ export const useOauth2 = ({
             // eslint-disable-next-line no-console
             console.error(error);
         } finally {
+            // Mark the session as logged-out BEFORE clearing storage, otherwise
+            // a lingering `logged_state=true` cookie can trigger an immediate
+            // silent re-login loop once local storage is empty.
+            try {
+                Cookies.set('logged_state', 'false', {
+                    domain: window.location.hostname.split('.').slice(-2).join('.'),
+                    expires: 30,
+                    path: '/',
+                    secure: true,
+                });
+                Cookies.remove('logged_state', { path: '/' });
+            } catch {
+                /* noop */
+            }
             // Clear all stored auth data (reloads the page to the logged-out view).
             clearAuthData();
         }

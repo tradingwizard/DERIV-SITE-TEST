@@ -86,7 +86,9 @@ const CallbackPage = () => {
                 setLoggedStateCookie('true');
 
                 const selected_currency = isVirtualAccount(active) ? 'demo' : active.currency || 'USD';
-                window.location.replace(`${window.location.origin}/?account=${selected_currency}`);
+                // Land back inside the bot app (the trading route is /dashboard),
+                // not the marketing home page at /.
+                window.location.replace(`${window.location.origin}/dashboard?account=${selected_currency}`);
             } catch (err: any) {
                 clearAuthData(false);
                 setLoggedStateCookie('false');
