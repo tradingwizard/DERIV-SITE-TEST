@@ -10,12 +10,9 @@ import useTMB from '@/hooks/useTMB';
 import RootStore from '@/stores/root-store';
 import {
     LegacyAccountLimitsIcon,
-    LegacyCashierIcon,
     LegacyChartsIcon,
     LegacyHelpCentreIcon,
-    LegacyHomeOldIcon,
     LegacyProfileSmIcon,
-    LegacyReportsIcon,
     LegacyResponsibleTradingIcon,
     LegacyTheme1pxIcon,
     LegacyWhatsappIcon,
@@ -109,12 +106,6 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
                 },
                 {
                     as: 'a',
-                    href: standalone_routes.deriv_app,
-                    label: localize("Trader's Hub"),
-                    LeftComponent: LegacyHomeOldIcon,
-                },
-                {
-                    as: 'a',
                     href: standalone_routes.bot,
                     label: localize('Trade'),
                     LeftComponent: LegacyChartsIcon,
@@ -125,20 +116,6 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
                     href: getRedirectUrl(),
                     label: localize('Account Settings'),
                     LeftComponent: LegacyProfileSmIcon,
-                },
-                !has_wallet &&
-                    !is_hub_enabled_country && {
-                        as: 'a',
-                        href: standalone_routes.cashier_deposit,
-                        label: localize('Cashier'),
-                        LeftComponent: LegacyCashierIcon,
-                    },
-                client?.is_logged_in && {
-                    as: 'button',
-                    label: localize('Reports'),
-                    LeftComponent: LegacyReportsIcon,
-                    submenu: 'reports',
-                    onClick: () => {},
                 },
                 {
                     as: 'button',
