@@ -9,7 +9,7 @@ type Props = {
 
 const IntroSplash = ({
     storageKey = 'gts_intro_seen_v1',
-    duration = 1900,
+    duration = 2700,
     tagline = 'AI Options Automation',
 }: Props) => {
     const [visible, setVisible] = useState(false);

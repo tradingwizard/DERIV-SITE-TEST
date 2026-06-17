@@ -63,11 +63,11 @@
         align-items: center;
         gap: 1.6rem;
         padding: 0 2rem;
-        animation: gts-intro-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        animation: gts-intro-rise 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
 
     &__bulb {
-        animation: gts-intro-bulb-glow 1.6s ease-out;
+        animation: gts-intro-bulb-glow 2.0s ease-out;
         filter: drop-shadow(0 0 24px rgba(246, 197, 103, 0.5));
 
         svg {
@@ -124,7 +124,7 @@
             height: 100%;
             background: linear-gradient(90deg, #b91c1c, #fbe1c4, #b91c1c);
             background-size: 200% 100%;
-            animation: gts-intro-bar 1.6s ease-in-out infinite, gts-intro-bar-fill 2.2s ease-out forwards;
+            animation: gts-intro-bar 1.8s ease-in-out infinite, gts-intro-bar-fill 2.7s ease-out forwards;
             width: 0%;
         }
     }
