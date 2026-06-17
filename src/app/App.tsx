@@ -4,12 +4,10 @@ import React from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import ChunkLoader from '@/components/loader/chunk-loader';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
-import { crypto_currencies_display_order, fiat_currencies_display_order } from '@/components/shared';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
-import { TAuthData } from '@/types/api-types';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
 import './app-root.scss';
@@ -93,50 +91,52 @@ function App() {
     }, []);
 
     React.useEffect(() => {
-        const accounts_list = localStorage.getItem('accountsList');
         const client_accounts = localStorage.getItem('clientAccounts');
         const url_params = new URLSearchParams(window.location.search);
         const account_currency = url_params.get('account');
-        const validCurrencies = [...fiat_currencies_display_order, ...crypto_currencies_display_order];
 
-        const is_valid_currency = account_currency && validCurrencies.includes(account_currency?.toUpperCase());
+        if (!client_accounts) return;
 
-        if (!accounts_list || !client_accounts) return;
+        // The new Deriv platform uses account_type ("demo"/"real") and IDs like
+        // "DOT90004580" — not legacy VR/CR/VRTC loginid prefixes.
+        const isVirtual = (account_type?: string, loginid?: string) =>
+            /demo|virtual|vrt/i.test(`${account_type ?? ''} ${loginid ?? ''}`);
 
         try {
-            const parsed_accounts = JSON.parse(accounts_list);
-            const parsed_client_accounts = JSON.parse(client_accounts) as TAuthData['account_list'];
+            const parsed_client_accounts = JSON.parse(client_accounts) as Record<
+                string,
+                { loginid: string; token: string; currency: string; account_type?: string }
+            >;
 
             const updateLocalStorage = (token: string, loginid: string) => {
                 localStorage.setItem('authToken', token);
                 localStorage.setItem('active_loginid', loginid);
             };
 
+            const entries = Object.entries(parsed_client_accounts);
+
             // Handle demo account
             if (account_currency?.toUpperCase() === 'DEMO') {
-                const demo_account = Object.entries(parsed_accounts).find(([key]) => key.startsWith('VR'));
-
-                if (demo_account) {
-                    const [loginid, token] = demo_account;
-                    updateLocalStorage(String(token), loginid);
-                    return;
+                const demo = entries.find(([loginid, account]) => isVirtual(account.account_type, loginid));
+                if (demo) {
+                    const [loginid, account] = demo;
+                    updateLocalStorage(String(account.token), loginid);
                 }
+                return;
             }
 
-            // Handle real account with valid currency
-            if (account_currency?.toUpperCase() !== 'DEMO' && is_valid_currency) {
-                const real_account = Object.entries(parsed_client_accounts).find(
+            // Handle real account, preferring a currency match when requested.
+            const real =
+                entries.find(
                     ([loginid, account]) =>
-                        !loginid.startsWith('VR') && account.currency.toUpperCase() === account_currency?.toUpperCase()
-                );
+                        !isVirtual(account.account_type, loginid) &&
+                        (!account_currency ||
+                            account.currency?.toUpperCase() === account_currency?.toUpperCase())
+                ) ?? entries.find(([loginid, account]) => !isVirtual(account.account_type, loginid));
 
-                if (real_account) {
-                    const [loginid, account] = real_account;
-                    if ('token' in account) {
-                        updateLocalStorage(String(account?.token), loginid);
-                    }
-                    return;
-                }
+            if (real) {
+                const [loginid, account] = real;
+                updateLocalStorage(String(account.token), loginid);
             }
         } catch (e) {
             console.warn('Error', e); // eslint-disable-line no-console

@@ -142,7 +142,29 @@ export class DerivWsAdapter {
                 return;
             }
 
+            let opened = false;
+            let settled = false;
+            const settle = (fn: () => void) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+                fn();
+            };
+
+            // If the socket never opens, fail fast so the authorize flow can
+            // retry / surface an error instead of hanging forever.
+            const timeout = setTimeout(() => {
+                if (opened) return;
+                try {
+                    ws.close();
+                } catch {
+                    /* noop */
+                }
+                settle(() => reject(new Error('WebSocket connection timed out.')));
+            }, 15000);
+
             const onOpen = () => {
+                opened = true;
                 // A newer connection was started after this one — discard this
                 // socket so it can never clobber the active (newer) socket.
                 if (seq !== this.connect_seq) {
@@ -151,7 +173,7 @@ export class DerivWsAdapter {
                     } catch {
                         /* noop */
                     }
-                    resolve();
+                    settle(resolve);
                     return;
                 }
                 const previous = this.ws;
@@ -166,7 +188,7 @@ export class DerivWsAdapter {
                 this.flushQueue();
                 this.startKeepAlive();
                 this.connection.emit('open');
-                resolve();
+                settle(resolve);
             };
 
             ws.addEventListener('open', onOpen, { once: true });
@@ -175,16 +197,45 @@ export class DerivWsAdapter {
                 this.handleMessage(evt.data);
             });
             ws.addEventListener('close', () => {
+                // Closed before it ever opened: the attempt failed (e.g. an
+                // invalid/expired OTP). Reject so callers don't hang.
+                if (!opened) {
+                    settle(() => reject(new Error('WebSocket closed before opening.')));
+                    return;
+                }
                 if (ws !== this.ws) return; // an old (swapped-out) socket closed
                 this.stopKeepAlive();
                 if (!this.manually_closed) this.connection.emit('close');
             });
             ws.addEventListener('error', e => {
-                // Only reject if this attempt is still the current one and never
-                // became active.
-                if (seq === this.connect_seq && this.ws !== ws) reject(e);
+                // Only matters while the attempt has not yet opened.
+                if (!opened) {
+                    settle(() => reject(e instanceof Error ? e : new Error('WebSocket connection error.')));
+                }
             });
         });
+    }
+
+    /**
+     * Fetches a fresh OTP and opens the authenticated socket, retrying on
+     * transient OTP (500) or WebSocket failures. OTPs are single-use and
+     * short-lived, so a new one is requested before each attempt.
+     */
+    private async connectWithOtpRetry(token: string, accountId: string, attempts = 3): Promise<void> {
+        let last_error: any;
+        for (let i = 0; i < attempts; i++) {
+            try {
+                const ws_url = await fetchWebSocketUrl(token, accountId);
+                await this.connect(ws_url);
+                return;
+            } catch (e) {
+                last_error = e;
+                if (i < attempts - 1) {
+                    await new Promise(r => setTimeout(r, 600 * (i + 1)));
+                }
+            }
+        }
+        throw last_error ?? new Error('Failed to establish a trading connection.');
     }
 
     private startKeepAlive() {
@@ -494,9 +545,8 @@ export class DerivWsAdapter {
             const active = accounts.find(a => a.account_id === stored) ?? accounts[0];
             localStorage.setItem('active_loginid', active.account_id);
 
-            const ws_url = await fetchWebSocketUrl(token, active.account_id);
             this.manually_closed = false;
-            await this.connect(ws_url);
+            await this.connectWithOtpRetry(token, active.account_id);
 
             return { authorize: this.buildAuthorizeResponse(accounts, active) };
         } catch (error: any) {

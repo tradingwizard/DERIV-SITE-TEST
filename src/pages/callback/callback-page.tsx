@@ -56,13 +56,17 @@ const CallbackPage = () => {
                 }
 
                 const accountsList: Record<string, string> = {};
-                const clientAccounts: Record<string, { loginid: string; token: string; currency: string }> = {};
+                const clientAccounts: Record<
+                    string,
+                    { loginid: string; token: string; currency: string; account_type: string }
+                > = {};
                 accounts.forEach(account => {
                     accountsList[account.account_id] = access_token;
                     clientAccounts[account.account_id] = {
                         loginid: account.account_id,
                         token: access_token,
                         currency: account.currency,
+                        account_type: account.account_type,
                     };
                 });
 

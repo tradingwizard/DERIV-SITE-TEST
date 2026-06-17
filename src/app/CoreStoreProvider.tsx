@@ -11,7 +11,7 @@ import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { TLandingCompany, TSocketResponseData } from '@/types/api-types';
-import { useTranslations } from '@deriv-com/translations';
+import { localize, useTranslations } from '@deriv-com/translations';
 
 type TClientInformation = {
     loginid?: string;
@@ -30,6 +30,7 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
 
     const appInitialization = useRef(false);
     const accountInitialization = useRef(false);
+    const authAttempted = useRef(false);
     const timeInterval = useRef<NodeJS.Timeout | null>(null);
     const msg_listener = useRef<{ unsubscribe: () => void } | null>(null);
     const { client, common } = useStore() ?? {};
@@ -75,6 +76,38 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             client?.setIsLoggedIn(true);
         }
     }, [accountList, activeAccount, activeLoginid, client]);
+
+    // Surface a clear, actionable error if a logged-in user's authorization
+    // finished without success, instead of leaving a blank/non-working page.
+    useEffect(() => {
+        if (!common) return;
+        if (isAuthorizing) {
+            authAttempted.current = true;
+            return;
+        }
+        const has_token = !!localStorage.getItem('authToken');
+        const is_logged_in_cookie = Cookies.get('logged_state') === 'true';
+
+        if (isAuthorized) {
+            if (common.has_error) common.setError(false, {});
+            return;
+        }
+
+        if (authAttempted.current && has_token && is_logged_in_cookie && !common.has_error) {
+            common.setError(true, {
+                header: localize('We could not connect to your account'),
+                message: localize(
+                    'Something went wrong while loading your trading account. Please check your connection and try again.'
+                ),
+                redirect_label: localize('Try again'),
+                redirectOnClick: () => {
+                    window.location.reload();
+                },
+                should_clear_error_on_click: true,
+                type: 'error',
+            });
+        }
+    }, [isAuthorizing, isAuthorized, common]);
 
     useEffect(() => {
         initFormErrorMessages(FORM_ERROR_MESSAGES());

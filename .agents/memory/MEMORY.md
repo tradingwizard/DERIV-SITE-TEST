@@ -1,1 +1,2 @@
 - [Deriv new-API migration](deriv-new-api-migration.md) — GTS Empire runs on Deriv's NEW API platform (OTP-in-URL WS, server-side PKCE, renamed fields); legacy DerivAPIBasic is gone.
+- [Deriv NEW API platform quirks](deriv-new-api-platform.md) — new accounts use account_type not VR/CR prefixes; OTP is single-use (fetch fresh per WS retry); ws connect must reject on close/timeout or dashboard hangs blank.

@@ -94,6 +94,12 @@ app.get('/api/deriv/accounts', async (req, res) => {
             },
         });
         const data = await deriv_res.json().catch(() => ({}));
+        if (!deriv_res.ok) {
+            console.error(`[deriv] GET accounts -> ${deriv_res.status}`, JSON.stringify(data));
+        } else {
+            const count = Array.isArray(data?.data) ? data.data.length : 'n/a';
+            console.log(`[deriv] GET accounts -> ${deriv_res.status} (${count} accounts)`);
+        }
         return res.status(deriv_res.status).json(data);
     } catch (err) {
         console.error('Accounts proxy error:', err);
@@ -117,6 +123,11 @@ app.post('/api/deriv/accounts/:accountId/otp', async (req, res) => {
             }
         );
         const data = await deriv_res.json().catch(() => ({}));
+        if (!deriv_res.ok) {
+            console.error(`[deriv] POST otp ${accountId} -> ${deriv_res.status}`, JSON.stringify(data));
+        } else {
+            console.log(`[deriv] POST otp ${accountId} -> ${deriv_res.status} (url ${data?.data?.url ? 'received' : 'missing'})`);
+        }
         return res.status(deriv_res.status).json(data);
     } catch (err) {
         console.error('OTP proxy error:', err);
