@@ -257,11 +257,26 @@ const AppContent = observer(() => {
 
     // use is_landing_company_loaded to know got details of accounts to identify should show an error or not
     React.useEffect(() => {
-        if (client.is_logged_in && client.is_landing_company_loaded && is_api_initialized) {
+        if (!is_api_initialized || !client.is_logged_in) return undefined;
+
+        if (client.is_landing_company_loaded) {
             changeActiveSymbolLoadingState();
+            return undefined;
         }
+
+        // Safety net for logged-in users: the dashboard is gated on the landing
+        // company details loading, but on the new API platform that call can fail
+        // or be unsupported. Without this timeout the spinner would stay up
+        // forever. Mirrors the logged-out 10s fallback in
+        // changeActiveSymbolLoadingState.
+        const landing_company_timeout = setTimeout(() => {
+            console.log('[Timeout] Landing company not loaded, showing dashboard anyway');
+            changeActiveSymbolLoadingState();
+        }, 10000);
+
+        return () => clearTimeout(landing_company_timeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [client.is_landing_company_loaded, is_api_initialized, client.loginid]);
+    }, [client.is_landing_company_loaded, is_api_initialized, client.loginid, client.is_logged_in]);
 
     useEffect(() => {
         initDatadog(true);

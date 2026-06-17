@@ -81,6 +81,7 @@ export default class ClientStore {
             setCurrency: action,
             setIsLoggedIn: action,
             setIsLoggingOut: action,
+            setIsLandingCompanyLoaded: action,
             setLandingCompany: action,
             setLoginId: action,
             setWebsiteStatus: action,
@@ -312,6 +313,10 @@ export default class ClientStore {
 
     setWebsiteStatus(status: WebsiteStatus | undefined) {
         this.website_status = status;
+    }
+
+    setIsLandingCompanyLoaded(value: boolean) {
+        this.is_landing_company_loaded = value;
     }
 
     setLandingCompany(landing_companies: TLandingCompany) {
