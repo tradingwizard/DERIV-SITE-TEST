@@ -16,6 +16,18 @@ long-standing assumptions from the legacy Deriv codebase are now WRONG.
 - **How to apply:** never branch demo/real on `loginid.startsWith('VR'|'CR')`.
   Derive virtual via `account_type` (treat `/demo|virtual|vrt/i` as virtual).
   `account_id` is the loginid used everywhere downstream.
+- UI that groups/labels accounts must use `is_virtual` + `landing_company_name`
+  (adapter sets it to `group || 'svg'`, so EU == `'maltainvest'`), NOT loginid
+  prefixes (CR/MF/VRT). Same rule for `is_cr_account` (real && !eu).
+
+## Pending-contract recovery — portfolio snapshot is gone
+- Legacy recovery read `core.portfolio.positions`; the portfolio store/sub was
+  removed, so positions were hardcoded `[]` and recovery silently did nothing.
+- **How to apply:** rebuild the positions list from the `proposal_open_contract`
+  updates the app already receives (cache them per contract_id in transactions
+  store). This restores LIVE-session reconciliation only — it does NOT survive a
+  page reload (the cache is in-memory and the bot isn't running after refresh).
+  Full refresh-time finalization would need re-subscribing to POC by contract_id.
 
 ## OTP-authenticated WebSocket
 - OTP endpoint → `{ data: { url: "wss://.../ws/demo|real?otp=..." } }`.

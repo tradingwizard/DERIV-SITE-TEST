@@ -472,7 +472,10 @@ export class DerivWsAdapter {
     }
 
     getSelfExclusion(): Promise<any> {
-        return Promise.resolve({});
+        // The new platform doesn't expose a self-exclusion endpoint on the
+        // per-account socket. Return the expected shape (empty) so callers can
+        // read get_self_exclusion safely instead of throwing.
+        return Promise.resolve({ get_self_exclusion: {} });
     }
 
     // --- DerivAPIBasic convenience methods --------------------------------

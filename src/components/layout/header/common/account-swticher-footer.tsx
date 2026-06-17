@@ -20,15 +20,18 @@ import { AccountSwitcherDivider } from './utils';
 const AccountSwitcherFooter = ({ loginid, residence, type }: TAccountSwitcherFooter) => {
     const accountList = JSON.parse(localStorage.getItem('clientAccounts') || '{}');
     const account_currency = loginid ? accountList[loginid]?.currency : '';
-    // Hide manage button for demo accounts (virtual accounts)
-    const show_manage_button = loginid?.includes('CR') || loginid?.includes('MF');
     const { has_wallet = false } = useStoreWalletAccountsList() || {};
     const { hubEnabledCountryList } = useFirebaseCountriesConfig();
 
-    // Check if the account is a demo account from both loginid and URL parameter
+    // Check if the account is a demo account from its type, stored flag, or URL
+    // parameter (login-ID prefixes are no longer reliable on the new API).
     const urlParams = new URLSearchParams(window.location.search);
     const account_param = urlParams.get('account');
-    const is_virtual = loginid?.startsWith('VRTC') || account_param === 'demo' || false;
+    const account_is_virtual = loginid ? Boolean(accountList[loginid]?.is_virtual) : false;
+    const is_virtual = account_is_virtual || type === 'demo' || account_param === 'demo' || false;
+
+    // Show the manage button only for real accounts.
+    const show_manage_button = type === 'real' && !is_virtual;
 
     // Get the redirect URL from handleTraderHubRedirect
     const redirectParams = {

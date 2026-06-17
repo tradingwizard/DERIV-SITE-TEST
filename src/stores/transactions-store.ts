@@ -54,6 +54,10 @@ export default class TransactionsStore {
     recovered_transactions: number[] = [];
     is_called_proposal_open_contract = false;
     is_transaction_details_modal_open = false;
+    // Latest proposal_open_contract data per contract id, received over the live
+    // stream. Replaces the legacy portfolio snapshot for recovering pending
+    // contracts on the new API.
+    open_contracts: Record<number, ProposalOpenContract> = {};
 
     get transactions(): TTransaction[] {
         if (this.core?.client?.loginid) return this.elements[this.core?.client?.loginid] ?? [];
@@ -100,6 +104,9 @@ export default class TransactionsStore {
     };
 
     onBotContractEvent(data: TContractInfo) {
+        if (data?.contract_id) {
+            this.open_contracts[data.contract_id] = data as ProposalOpenContract;
+        }
         this.pushTransaction(data);
     }
 
@@ -176,6 +183,7 @@ export default class TransactionsStore {
         this.recovered_completed_transactions = this.recovered_completed_transactions?.slice(0, 0);
         this.recovered_transactions = this.recovered_transactions?.slice(0, 0);
         this.is_transaction_details_modal_open = false;
+        this.open_contracts = {};
     }
 
     registerReactions() {
@@ -254,9 +262,14 @@ export default class TransactionsStore {
     }
 
     async recoverPendingContractsById(contract_id: number, contract: ProposalOpenContract | null = null) {
-        // TODO: need to fix as the portfolio is not available now
-        // const positions = this.core.portfolio.positions;
-        const positions: unknown[] = [];
+        // The legacy portfolio snapshot is no longer available on the new API.
+        // Rebuild the open-positions list from the proposal_open_contract updates
+        // received during this session so pending contracts can still be
+        // reconciled into accurate stats and history.
+        const positions: TPortfolioPosition[] = Object.keys(this.open_contracts).map(id => ({
+            id: Number(id),
+            contract_info: this.open_contracts[Number(id)],
+        })) as TPortfolioPosition[];
 
         if (contract) {
             this.is_called_proposal_open_contract = true;

@@ -223,7 +223,9 @@ export default class ClientStore {
     }
 
     get is_cr_account() {
-        return this.loginid?.startsWith('CR');
+        // On the new API, account login IDs no longer reliably start with "CR".
+        // A CR account is simply a real (non-virtual) non-EU account.
+        return Boolean(this.loginid) && !this.is_virtual && !this.is_eu;
     }
 
     get should_hide_header() {

@@ -123,16 +123,26 @@ const AccountSwitcher = observer(({ activeAccount }: TAccountSwitcher) => {
         client.website_status?.currencies_config,
         activeAccount?.loginid,
     ]);
+    // On the new API, login IDs no longer reliably carry CR/MF/VRT prefixes, so
+    // we group by the account's virtual flag and landing company instead.
     const modifiedCRAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => account?.loginid?.includes('CR')) ?? [];
+        return (
+            modifiedAccountList?.filter(
+                account => !account?.is_virtual && account?.landing_company_name !== 'maltainvest'
+            ) ?? []
+        );
     }, [modifiedAccountList]);
 
     const modifiedMFAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => account?.loginid?.includes('MF')) ?? [];
+        return (
+            modifiedAccountList?.filter(
+                account => !account?.is_virtual && account?.landing_company_name === 'maltainvest'
+            ) ?? []
+        );
     }, [modifiedAccountList]);
 
     const modifiedVRTCRAccountList = useMemo(() => {
-        return modifiedAccountList?.filter(account => account?.loginid?.includes('VRT')) ?? [];
+        return modifiedAccountList?.filter(account => Boolean(account?.is_virtual)) ?? [];
     }, [modifiedAccountList]);
 
     const switchAccount = async (loginId: number) => {

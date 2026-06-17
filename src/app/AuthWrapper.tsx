@@ -73,7 +73,12 @@ const setLocalStorageToken = async (
                             }
                         }
                     } else {
-                        localStorage.setItem('client.country', authorize.country);
+                        // The new login response may not supply a country; only
+                        // store it when present so we don't overwrite a good value
+                        // (from account settings) with an empty string.
+                        if (authorize.country) {
+                            localStorage.setItem('client.country', authorize.country);
+                        }
                         const firstId = authorize?.account_list[0]?.loginid;
                         const filteredTokens = loginInfo.filter(token => token.loginid === firstId);
                         if (filteredTokens.length) {

@@ -66,9 +66,10 @@ export default class SelfExclusionStore {
     async checkRestriction() {
         if (api_base.api && api_base.is_authorized && V2GetActiveClientId()) {
             try {
-                const response = await api_base.api.getSelfExclusion();
-                const { get_self_exclusion }: { get_self_exclusion: { max_losses?: number } } = response;
-                const { max_losses: maxLosses } = get_self_exclusion;
+                const response = (await api_base.api.getSelfExclusion()) as {
+                    get_self_exclusion?: { max_losses?: number };
+                };
+                const maxLosses = response?.get_self_exclusion?.max_losses;
                 if (maxLosses) {
                     this.setApiMaxLosses(maxLosses);
                 }
