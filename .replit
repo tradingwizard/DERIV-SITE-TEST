@@ -46,3 +46,7 @@ deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 publicDir = "dist"
 run = ["npm", "run", "start:prod"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
