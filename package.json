@@ -6,7 +6,11 @@
         "node": "20.x"
     },
     "scripts": {
-        "start": "rsbuild dev -o",
+        "start": "concurrently -k -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",
+        "dev:server": "node server/index.js",
+        "dev:web": "rsbuild dev",
+        "server": "node server/index.js",
+        "start:prod": "node server/index.js",
         "build": "rsbuild build",
         "watch": "rsbuild build --watch",
         "serve": "http-server dist -p 8443 -a localhost -o",
@@ -118,6 +122,7 @@
         "babel-jest": "^29.7.0",
         "babel-loader": "^8.1.0",
         "babel-plugin-syntax-dynamic-import": "^6.18.0",
+        "concurrently": "^9.2.1",
         "copy-webpack-plugin": "^12.0.2",
         "css-hot-loader": "^1.4.4",
         "css-loader": "^7.1.2",

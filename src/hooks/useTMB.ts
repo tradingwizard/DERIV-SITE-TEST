@@ -165,82 +165,19 @@ const useTMB = (): UseTMBReturn => {
 
     // Use a ref to track if we've already determined TMB status
     const tmbStatusDeterminedRef = useRef(false);
-    const tmbStatusPromiseRef = useRef<Promise<boolean> | null>(null);
 
     const isTmbEnabled = useCallback(async () => {
-        // If we've already determined the status, return the cached value
-        if (tmbStatusDeterminedRef.current) {
-            return window.is_tmb_enabled === true;
+        // GTS Empire runs on the new Deriv API platform, which does not use TMB.
+        // TMB is hard-disabled so the PKCE OAuth flow is ALWAYS used. There is no
+        // localStorage/remote override here on purpose: any TMB path would try to
+        // talk to Deriv's own OAuth infra and break login on this fork.
+        window.is_tmb_enabled = false;
+        if (!tmbStatusDeterminedRef.current) {
+            setIsTmbEnabled(false);
+            tmbStatusDeterminedRef.current = true;
         }
-
-        // If we're already in the process of determining the status, wait for that promise
-        if (tmbStatusPromiseRef.current) {
-            return tmbStatusPromiseRef.current;
-        }
-
-        // Create a new promise to determine the status
-        tmbStatusPromiseRef.current = (async () => {
-            try {
-                // Check if we have a manually set value in localStorage
-                const storedValue = localStorage.getItem('is_tmb_enabled');
-
-                // If localStorage value is explicitly set, use that value
-                if (storedValue === 'true') {
-                    window.is_tmb_enabled = true;
-                    setIsTmbEnabled(true);
-                    tmbStatusDeterminedRef.current = true;
-                    return true;
-                } else if (storedValue === 'false') {
-                    window.is_tmb_enabled = false;
-                    setIsTmbEnabled(false);
-                    tmbStatusDeterminedRef.current = true;
-                    return false;
-                }
-
-                // Otherwise, use the API value
-                const url = is_staging
-                    ? 'https://app-config-staging.firebaseio.com/remote_config/oauth/is_tmb_enabled.json'
-                    : 'https://app-config-prod.firebaseio.com/remote_config/oauth/is_tmb_enabled.json';
-                const response = await fetch(url);
-                const result = await response.json();
-
-                const isEnabled = !!result.dbot;
-
-                // Update window property with API value and mark as determined
-                window.is_tmb_enabled = isEnabled;
-                setIsTmbEnabled(isEnabled);
-                tmbStatusDeterminedRef.current = true;
-                return isEnabled;
-            } catch (e) {
-                // eslint-disable-next-line no-console
-                console.error(e);
-
-                // Check if we have a manually set value in localStorage
-                const storedValue = localStorage.getItem('is_tmb_enabled');
-
-                // If localStorage value is explicitly set, use that value
-                if (storedValue === 'true') {
-                    window.is_tmb_enabled = true;
-                    setIsTmbEnabled(true);
-                    tmbStatusDeterminedRef.current = true;
-                    return true;
-                } else if (storedValue === 'false') {
-                    window.is_tmb_enabled = false;
-                    setIsTmbEnabled(false);
-                    tmbStatusDeterminedRef.current = true;
-                    return false;
-                }
-
-                // By default it will fallback to false if firebase error happens
-                window.is_tmb_enabled = false;
-                setIsTmbEnabled(false);
-                tmbStatusDeterminedRef.current = true;
-                return false;
-            }
-        })();
-
-        return tmbStatusPromiseRef.current;
-    }, [is_staging]);
+        return false;
+    }, []);
 
     // Initialize the hook and check TMB status - only run once
     useEffect(() => {

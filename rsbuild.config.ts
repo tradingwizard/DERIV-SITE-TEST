@@ -91,6 +91,12 @@ export default defineConfig({
             'Cross-Origin-Embedder-Policy': 'unsafe-none',
             'Cache-Control': 'no-cache',
         },
+        proxy: {
+            '/api': {
+                target: `http://localhost:${process.env.BACKEND_PORT || 3001}`,
+                changeOrigin: true,
+            },
+        },
     },
     dev: {
         hmr: true,

@@ -1,0 +1,1 @@
+- [Deriv new-API migration](deriv-new-api-migration.md) — GTS Empire runs on Deriv's NEW API platform (OTP-in-URL WS, server-side PKCE, renamed fields); legacy DerivAPIBasic is gone.

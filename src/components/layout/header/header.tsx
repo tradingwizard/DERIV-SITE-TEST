@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import PWAInstallButton from '@/components/pwa-install-button';
-import { generateOAuthURL, standalone_routes } from '@/components/shared';
+import { standalone_routes } from '@/components/shared';
 import Button from '@/components/shared_ui/button';
 import useActiveAccount from '@/hooks/api/account/useActiveAccount';
 import { useOauth2 } from '@/hooks/auth/useOauth2';
@@ -10,9 +10,9 @@ import { useFirebaseCountriesConfig } from '@/hooks/firebase/useFirebaseCountrie
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
-import { clearAuthData, handleOidcAuthFailure } from '@/utils/auth-utils';
+import { clearAuthData } from '@/utils/auth-utils';
+import { redirectToLogin } from '@/utils/pkce';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { Localize, useTranslations } from '@deriv-com/translations';
 import { Header, useDevice, Wrapper } from '@deriv-com/ui';
 import { Tooltip } from '@deriv-com/ui';
@@ -151,22 +151,8 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                 if (tmbEnabled) {
                                     await onRenderTMBCheck(true); // Pass true to indicate it's from login button
                                 } else {
-                                    // Always use OIDC if TMB is not enabled
-                                    try {
-                                        await requestOidcAuthentication({
-                                            redirectCallbackUri: `${window.location.origin}/callback`,
-                                            ...(query_param_currency
-                                                ? {
-                                                      state: {
-                                                          account: query_param_currency,
-                                                      },
-                                                  }
-                                                : {}),
-                                        });
-                                    } catch (err) {
-                                        handleOidcAuthFailure(err);
-                                        window.location.replace(generateOAuthURL());
-                                    }
+                                    // New Deriv API platform: PKCE OAuth redirect
+                                    await redirectToLogin({ account: query_param_currency });
                                 }
                             } catch (error) {
                                 // eslint-disable-next-line no-console
@@ -179,7 +165,7 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                     <Button
                         primary
                         onClick={() => {
-                            window.open(standalone_routes.signup);
+                            redirectToLogin({ isSignup: true });
                         }}
                     >
                         <Localize i18n_default_text='Sign up' />

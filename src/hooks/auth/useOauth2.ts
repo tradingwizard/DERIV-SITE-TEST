@@ -2,24 +2,20 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import RootStore from '@/stores/root-store';
-import { handleOidcAuthFailure } from '@/utils/auth-utils';
+import { clearAuthData } from '@/utils/auth-utils';
+import { redirectToLogin } from '@/utils/pkce';
 import { Analytics } from '@deriv-com/analytics';
-import { OAuth2Logout, requestOidcAuthentication } from '@deriv-com/auth-client';
 
 /**
  * Provides an object with properties: `oAuthLogout`, `retriggerOAuth2Login`, and `isSingleLoggingIn`.
  *
- * `oAuthLogout` is a function that logs out the user of the OAuth2-enabled app.
+ * `oAuthLogout` logs the user out (clears local auth data and redirects home).
  *
- * `retriggerOAuth2Login` is a function that retriggers the OAuth2 login flow to get a new token.
+ * `retriggerOAuth2Login` retriggers the PKCE OAuth login flow to get a new token.
  *
- * `isSingleLoggingIn` is a boolean that indicates whether the user is currently logging in.
- *
- * The `handleLogout` argument is an optional function that will be called after logging out the user.
- * If `handleLogout` is not provided, the function will resolve immediately.
+ * `isSingleLoggingIn` indicates whether the user is currently logging in.
  *
  * @param {{ handleLogout?: () => Promise<void> }} [options] - An object with an optional `handleLogout` property.
- * @returns {{ oAuthLogout: () => Promise<void>; retriggerOAuth2Login: () => Promise<void>; isSingleLoggingIn: boolean }}
  */
 export const useOauth2 = ({
     handleLogout,
@@ -58,37 +54,31 @@ export const useOauth2 = ({
     const logoutHandler = async () => {
         client?.setIsLoggingOut(true);
         try {
-            await OAuth2Logout({
-                redirectCallbackUri: `${window.location.origin}/callback`,
-                WSLogoutAndRedirect: handleLogout ?? (() => Promise.resolve()),
-                postLogoutRedirectUri: window.location.origin,
-            }).catch(err => {
+            await client?.logout?.().catch(err => {
                 // eslint-disable-next-line no-console
-                console.error(err);
+                console.error('Error during logout:', err);
             });
-            await client?.logout().catch(err => {
-                // eslint-disable-next-line no-console
-                console.error('Error during TMB logout:', err);
-            });
-
+            if (handleLogout) {
+                await handleLogout().catch(() => undefined);
+            }
             Analytics.reset();
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error(error);
+        } finally {
+            // Clear all stored auth data (reloads the page to the logged-out view).
+            clearAuthData();
+        }
+    };
+
+    const retriggerOAuth2Login = async () => {
+        try {
+            await redirectToLogin();
         } catch (error) {
             // eslint-disable-next-line no-console
             console.error(error);
         }
     };
-    const retriggerOAuth2Login = async () => {
-        try {
-            await requestOidcAuthentication({
-                redirectCallbackUri: `${window.location.origin}/callback`,
-                postLogoutRedirectUri: window.location.origin,
-            }).catch(err => {
-                handleOidcAuthFailure(err);
-            });
-        } catch (error) {
-            handleOidcAuthFailure(error);
-        }
-    };
 
-    return { oAuthLogout: logoutHandler, retriggerOAuth2Login, isSingleLoggingIn };
+    return { oAuthLogout: logoutHandler, retriggerOAuth2Login, isSingleLoggingIn, isOAuth2Enabled: true };
 };
