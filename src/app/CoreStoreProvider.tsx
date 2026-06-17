@@ -11,6 +11,7 @@ import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { TLandingCompany, TSocketResponseData } from '@/types/api-types';
+import type { Balance } from '@deriv/api-types';
 import { localize, useTranslations } from '@deriv-com/translations';
 
 type TClientInformation = {
@@ -58,6 +59,46 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
         () => accountList?.find(account => account.loginid === activeLoginid),
         [activeLoginid, accountList]
     );
+
+    // Seed the all-accounts balance map from the account list returned at login.
+    // The new Deriv platform's authenticated socket is per-account and never
+    // emits an "all accounts" balance message, so without this the map stays
+    // empty and every balance (Real and Demo) renders blank. We only add
+    // accounts that aren't already in the map, so live updates for the active
+    // account (handled below) are never clobbered.
+    useEffect(() => {
+        if (!client || !accountList?.length) return;
+
+        const existing_accounts = client.all_accounts_balance?.accounts ?? {};
+        const accounts: NonNullable<Balance['accounts']> = { ...existing_accounts };
+        let has_new_account = false;
+
+        accountList.forEach(account => {
+            const account_loginid = account?.loginid;
+            if (!account_loginid || accounts[account_loginid]) return;
+            const account_balance = Number((account as { balance?: number })?.balance ?? 0);
+            accounts[account_loginid] = {
+                balance: account_balance,
+                converted_amount: account_balance,
+                currency: account?.currency ?? '',
+                demo_account: account?.is_virtual ? 1 : 0,
+                status: 1,
+                type: 'deriv',
+            };
+            has_new_account = true;
+        });
+
+        if (has_new_account) {
+            const active_entry = accounts[activeLoginid ?? ''];
+            client.setAllAccountsBalance({
+                ...client.all_accounts_balance,
+                accounts,
+                balance: active_entry?.balance ?? client.all_accounts_balance?.balance ?? 0,
+                currency: active_entry?.currency ?? client.all_accounts_balance?.currency ?? '',
+                loginid: activeLoginid ?? client.all_accounts_balance?.loginid ?? '',
+            });
+        }
+    }, [accountList, activeLoginid, client]);
 
     useEffect(() => {
         const currentBalanceData = client?.all_accounts_balance?.accounts?.[activeAccount?.loginid ?? ''];
@@ -193,24 +234,31 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
                 const balance = data.balance;
                 if (balance?.accounts) {
                     client.setAllAccountsBalance(balance);
-                } else if (balance?.loginid) {
-                    if (!client?.all_accounts_balance?.accounts || !balance?.loginid) return;
+                } else if (balance && typeof balance.balance === 'number') {
+                    // The new platform's per-account socket sends a balance for
+                    // a single account and may omit the loginid; fall back to
+                    // the active account so its balance stays live.
+                    const target_loginid = balance.loginid || activeLoginid;
+                    if (!client?.all_accounts_balance?.accounts || !target_loginid) return;
                     const accounts = { ...client.all_accounts_balance.accounts };
-                    const currentLoggedInBalance = { ...accounts[balance.loginid] };
+                    const currentLoggedInBalance = { ...accounts[target_loginid] };
                     currentLoggedInBalance.balance = balance.balance;
+                    if (balance.currency) {
+                        currentLoggedInBalance.currency = balance.currency;
+                    }
 
                     const updatedAccounts = {
                         ...client.all_accounts_balance,
                         accounts: {
                             ...client.all_accounts_balance.accounts,
-                            [balance.loginid]: currentLoggedInBalance,
+                            [target_loginid]: currentLoggedInBalance,
                         },
                     };
                     client.setAllAccountsBalance(updatedAccounts);
                 }
             }
         },
-        [client, oAuthLogout]
+        [client, oAuthLogout, activeLoginid]
     );
 
     useEffect(() => {
