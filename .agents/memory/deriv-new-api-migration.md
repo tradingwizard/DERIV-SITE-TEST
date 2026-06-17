@@ -35,11 +35,12 @@ message flow no longer exists there.
 
 ## TMB must be forced OFF for this fork
 `useTMB` defaults come from Deriv's Firebase remote config and its session endpoint
-targets `oauth.deriv.com` — neither works for a non-Deriv domain. `isTmbEnabled()`
-is hard-defaulted to false (only an explicit `localStorage.is_tmb_enabled='true'`
-override re-enables it) so the PKCE flow is always used.
+targets `oauth.deriv.com` — neither works for a non-Deriv domain. TMB is therefore
+hard-forced off (no override path) so the PKCE flow is always used.
 **Why:** if TMB ever turned on, it would bypass PKCE and try to talk to Deriv's own
 OAuth infra, breaking login on gtstrader.app.
+**How to apply:** treat the TMB enabled-flag as synchronously false; never gate UI
+on the async `isTmbEnabled()` return value (a Promise is always truthy).
 
 ## Unverified in this env (must test on deploy)
 Live OAuth + real/demo trading cannot be exercised without a Deriv login. Two

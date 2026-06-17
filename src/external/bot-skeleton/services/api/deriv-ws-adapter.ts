@@ -21,6 +21,7 @@ type TPending = {
     req_id: number;
     expect: string;
     is_subscribe: boolean;
+    request: Record<string, any>;
     resolve: (value: any) => void;
     reject: (error: any) => void;
     settled: boolean;
@@ -326,10 +327,31 @@ export class DerivWsAdapter {
         this.pending.delete(target.req_id);
 
         if (translated.error) {
-            target.reject(translated.error);
+            target.reject(this.buildErrorResponse(translated, target.request));
         } else {
+            // Guarantee an echo_req on success too, since some callers read it
+            // and the new platform does not always echo the request back.
+            if (translated.echo_req == null) translated.echo_req = target.request;
             target.resolve(translated);
         }
+    }
+
+    /**
+     * Re-shape an error into the legacy DerivAPIBasic rejection contract that the
+     * trade engine relies on: `{ error: { code, message, echo_req, ... }, echo_req,
+     * msg_type, req_id }`. The trade engine reads `error.error.code`,
+     * `error.error.echo_req` and `error.echo_req` (e.g. in Proposal/helpers), so all
+     * of these must be present even though the new API may omit `echo_req`.
+     */
+    private buildErrorResponse(response: Record<string, any>, request: Record<string, any>): Record<string, any> {
+        const echo_req = response.echo_req ?? request ?? {};
+        const inner = { ...(response.error || {}) };
+        if (inner.echo_req == null) inner.echo_req = echo_req;
+        return {
+            ...response,
+            error: inner,
+            echo_req,
+        };
     }
 
     // --- public DerivAPIBasic-compatible surface ---------------------------
@@ -345,6 +367,9 @@ export class DerivWsAdapter {
                 req_id,
                 expect: this.expectedMsgType(translated),
                 is_subscribe,
+                // Keep the caller's original request so we can synthesize an
+                // `echo_req` on the response (the new API may not echo it back).
+                request,
                 resolve,
                 reject,
                 settled: false,
@@ -360,7 +385,12 @@ export class DerivWsAdapter {
                 if (p && !p.settled) {
                     p.settled = true;
                     this.pending.delete(req_id);
-                    p.reject(e);
+                    p.reject(
+                        this.buildErrorResponse(
+                            { error: { code: 'CallError', message: (e as Error)?.message || 'Send failed.' } },
+                            request
+                        )
+                    );
                 }
             }
         } else {
@@ -504,7 +534,12 @@ export class DerivWsAdapter {
         this.pending.forEach(p => {
             if (!p.settled) {
                 p.settled = true;
-                p.reject({ code: 'Disconnected', message: 'Connection closed.' });
+                p.reject(
+                    this.buildErrorResponse(
+                        { error: { code: 'DisconnectError', message: 'Connection closed.' } },
+                        p.request
+                    )
+                );
             }
         });
         this.pending.clear();

@@ -44,7 +44,11 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
 
     const { hubEnabledCountryList } = useFirebaseCountriesConfig();
     const { onRenderTMBCheck, isTmbEnabled } = useTMB();
-    const is_tmb_enabled = isTmbEnabled() || window.is_tmb_enabled === true;
+    // `isTmbEnabled()` is async; calling it inline returns a Promise (always
+    // truthy), which would silently force the TMB branch on. TMB is disabled for
+    // this fork, so derive the flag from the synchronously-available window flag.
+    void isTmbEnabled;
+    const is_tmb_enabled = window.is_tmb_enabled === true;
     // No need for additional state management here since we're handling it in the layout component
 
     const renderAccountSection = useCallback(() => {
