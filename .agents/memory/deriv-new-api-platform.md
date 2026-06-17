@@ -26,9 +26,19 @@ long-standing assumptions from the legacy Deriv codebase are now WRONG.
   reject on close-before-open and on a timeout — otherwise authorize() hangs
   forever and the dashboard renders blank with no accounts and no error.
 
-## Logged-out public market data is a SEPARATE protocol concern
-- The logged-out/public WS rejects legacy requests like `website_status`/`time`
-  with `UnrecognisedRequest`, and `forget_all` ticks with `DisconnectError`.
-- **How to apply:** these errors are unrelated to login/authorize; do not chase
-  them while fixing the post-login dashboard. They belong to the logged-out
-  market-data work stream.
+## Logged-out public market data — VERIFIED working (probed live)
+- Public WS URL: `wss://api.derivws.com/trading/v1/options/ws/public?app_id=...`
+  — the `/public` suffix is REQUIRED (without it the handshake 404s).
+- `req_id` IS echoed on every response, and `echo_req` is present. Correlation
+  by req_id is reliable; the adapter's msg_type fallback is only a safety net.
+- SUPPORTED on the public socket (no auth): `active_symbols`, `ticks`,
+  `ticks_history` (history/candles), `trading_times`, `contracts_for` (pass the
+  symbol as the value, e.g. `{contracts_for: 'R_100'}` — `currency` is rejected
+  with InputValidationFailed), `time`, `ping`, `forget`, `forget_all`.
+- NOT SUPPORTED (reply `UnrecognisedRequest`): `website_status`,
+  `residence_list`. These legacy "system" calls are gone on the new platform.
+- **How to apply:** the logged-out chart/symbol path is fine. `website_status`
+  is stubbed to degrade gracefully (the adapter resolves `{website_status:{}}`
+  on failure) so it doesn't spam uncaught errors; currency/country lookups have
+  fallbacks. The `DisconnectError` spam seen in dev was HMR reconnect noise, not
+  a protocol failure.

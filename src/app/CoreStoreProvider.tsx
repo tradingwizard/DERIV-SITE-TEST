@@ -147,9 +147,16 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
         if (client && connectionStatus === CONNECTION_STATUS.OPENED && api_base?.api) {
             if (!appInitialization.current) {
                 appInitialization.current = true;
-                api_base.api?.websiteStatus().then((res: TSocketResponseData<'website_status'>) => {
-                    client.setWebsiteStatus(res.website_status);
-                });
+                api_base.api
+                    ?.websiteStatus()
+                    .then((res: TSocketResponseData<'website_status'>) => {
+                        client.setWebsiteStatus(res.website_status);
+                    })
+                    .catch(() => {
+                        // website_status is not part of the new platform's WS
+                        // protocol for logged-out users; ignore so it never
+                        // becomes an unhandled rejection.
+                    });
             }
 
             // Initial time update

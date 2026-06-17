@@ -486,7 +486,12 @@ export class DerivWsAdapter {
     }
 
     websiteStatus(): Promise<any> {
-        return this.send({ website_status: 1 });
+        // The new platform's public market-data socket does not implement
+        // `website_status` (it replies `UnrecognisedRequest`). We still attempt
+        // it so an authenticated socket that supports it keeps working, but we
+        // degrade to a benign empty status instead of rejecting — otherwise the
+        // unhandled rejection surfaces as a console error for logged-out users.
+        return this.send({ website_status: 1 }).catch(() => ({ website_status: {} }));
     }
 
     getSettings(): Promise<any> {
