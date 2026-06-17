@@ -60,35 +60,50 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
         [activeLoginid, accountList]
     );
 
-    // Seed the all-accounts balance map from the account list returned at login.
-    // The new Deriv platform's authenticated socket is per-account and never
-    // emits an "all accounts" balance message, so without this the map stays
-    // empty and every balance (Real and Demo) renders blank. We only add
-    // accounts that aren't already in the map, so live updates for the active
-    // account (handled below) are never clobbered.
+    // Keep the all-accounts balance map in sync with the latest account list.
+    // The new Deriv platform's authenticated socket is per-account and only emits
+    // live balance updates for the *active* account, so the non-active accounts
+    // would otherwise keep showing their stale login-time balance. The account
+    // list is refreshed from REST on every authorize (login, account switch, and
+    // reconnect) with up-to-date balances, so we mirror those values into the map
+    // here. This refreshes the non-active accounts and re-seeds the active one;
+    // the live balance stream (handled below) then keeps the active account
+    // current after this runs. This effect only runs when the account list /
+    // active account changes (never on a live balance tick), so it can never
+    // clobber a fresher live balance with stale data.
     useEffect(() => {
         if (!client || !accountList?.length) return;
 
         const existing_accounts = client.all_accounts_balance?.accounts ?? {};
         const accounts: NonNullable<Balance['accounts']> = { ...existing_accounts };
-        let has_new_account = false;
+        let has_changes = false;
 
         accountList.forEach(account => {
             const account_loginid = account?.loginid;
-            if (!account_loginid || accounts[account_loginid]) return;
+            if (!account_loginid) return;
             const account_balance = Number((account as { balance?: number })?.balance ?? 0);
+            const account_currency = account?.currency ?? '';
+            const existing = accounts[account_loginid];
+
+            // Skip accounts whose balance and currency already match the latest
+            // account list to avoid needless re-renders.
+            if (existing && existing.balance === account_balance && existing.currency === account_currency) {
+                return;
+            }
+
             accounts[account_loginid] = {
+                ...existing,
                 balance: account_balance,
                 converted_amount: account_balance,
-                currency: account?.currency ?? '',
+                currency: account_currency,
                 demo_account: account?.is_virtual ? 1 : 0,
                 status: 1,
                 type: 'deriv',
             };
-            has_new_account = true;
+            has_changes = true;
         });
 
-        if (has_new_account) {
+        if (has_changes) {
             const active_entry = accounts[activeLoginid ?? ''];
             client.setAllAccountsBalance({
                 ...client.all_accounts_balance,
