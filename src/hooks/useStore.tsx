@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import ChunkLoader from '@/components/loader/chunk-loader';
 import RootStore from '@/stores/root-store';
 import { TWebSocket } from '@/Types';
+import { localize } from '@deriv-com/translations';
 import Bot from '../external/bot-skeleton/scratch/dbot';
 
 const StoreContext = createContext<null | RootStore>(null);
@@ -31,7 +33,12 @@ const StoreProvider: React.FC<TStoreProvider> = ({ children, mockStore }) => {
         }
     }, [store, mockStore]);
 
-    if (!store && mockStore) return null;
+    // Never hand a null store to consumers. Components throughout the app
+    // destructure values like `dashboard` directly off useStore(); rendering
+    // children before the root store exists causes a white-screen crash
+    // ("Cannot destructure property 'dashboard' of ... null"). Show the loader
+    // until the store is initialized.
+    if (!store) return <ChunkLoader message={localize('Initializing Deriv Bot...')} />;
 
     return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 };

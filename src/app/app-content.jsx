@@ -232,13 +232,14 @@ const AppContent = observer(() => {
                 }
             }, 1000);
 
-            // Set a maximum timeout to prevent infinite loading
+            // Set a maximum timeout to prevent infinite loading.
+            // Always force the dashboard to show; calling setIsLoading(false)
+            // is idempotent, so we must NOT gate it on the stale `is_loading`
+            // closure value (which could leave the spinner up permanently).
             setTimeout(() => {
                 clearInterval(intervalId);
-                if (is_loading) {
-                    console.log('[Timeout] Active symbols loading timeout, showing dashboard');
-                    setIsLoading(false);
-                }
+                console.log('[Timeout] Active symbols loading timeout, showing dashboard');
+                setIsLoading(false);
             }, 10000); // 10 second timeout
         }
     };

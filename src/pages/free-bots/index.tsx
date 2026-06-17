@@ -127,7 +127,10 @@ const FreeBots = observer(() => {
         try {
             setLoadingBotId(bot.id);
             
-            const response = await fetch(`/bots/${bot.fileName}`);
+            // Bot filenames contain special characters (emoji, @, &, +,
+            // parentheses, spaces). Encode them so the request URL is valid and
+            // the static server can resolve the file.
+            const response = await fetch(`/bots/${encodeURIComponent(bot.fileName)}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch bot file');
             }
