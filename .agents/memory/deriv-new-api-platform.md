@@ -25,9 +25,20 @@ long-standing assumptions from the legacy Deriv codebase are now WRONG.
   removed, so positions were hardcoded `[]` and recovery silently did nothing.
 - **How to apply:** rebuild the positions list from the `proposal_open_contract`
   updates the app already receives (cache them per contract_id in transactions
-  store). This restores LIVE-session reconciliation only — it does NOT survive a
-  page reload (the cache is in-memory and the bot isn't running after refresh).
-  Full refresh-time finalization would need re-subscribing to POC by contract_id.
+  store) for LIVE-session reconciliation. The global open-contracts subscription
+  does NOT report a contract that settled while the user was away (it dropped out
+  of the "open" set), so after a page refresh those stay stuck pending. Fix:
+  explicitly one-shot query `{proposal_open_contract:1, contract_id}` per cached
+  pending contract (no `subscribe`) and finalize the result.
+- **Two complementary recovery paths, do not conflate:** (1) a global WS message
+  listener (`app-content.jsx handleMessage`) finalizes contracts that settle
+  DURING the session (it only acts on `status !== 'open'`); (2) the refresh
+  one-shot query finalizes contracts that settled WHILE AWAY.
+- **Gotcha:** `updateResultsCompletedContract` must only push to
+  `recovered_transactions` when `isEnded(contract)`. Marking a still-OPEN
+  contract as recovered makes the live listener's `!recovered_transactions.includes`
+  guard skip it when it later settles → stuck pending forever. So the refresh
+  query must also skip finalizing contracts that are still open.
 
 ## OTP-authenticated WebSocket
 - OTP endpoint → `{ data: { url: "wss://.../ws/demo|real?otp=..." } }`.

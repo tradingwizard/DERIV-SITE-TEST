@@ -1,6 +1,6 @@
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { formatDate, isEnded } from '@/components/shared';
-import { LogTypes } from '@/external/bot-skeleton';
+import { api_base, LogTypes } from '@/external/bot-skeleton';
 import { ProposalOpenContract } from '@deriv/api-types';
 import { TPortfolioPosition, TStores } from '@deriv/stores/types';
 import { TContractInfo } from '../components/summary/summary-card.types';
@@ -58,6 +58,9 @@ export default class TransactionsStore {
     // stream. Replaces the legacy portfolio snapshot for recovering pending
     // contracts on the new API.
     open_contracts: Record<number, ProposalOpenContract> = {};
+    // Contract ids we're currently fetching the final state for, so we don't
+    // fire duplicate proposal_open_contract lookups while recovery runs.
+    pending_contract_lookups: Set<number> = new Set();
 
     get transactions(): TTransaction[] {
         if (this.core?.client?.loginid) return this.elements[this.core?.client?.loginid] ?? [];
@@ -184,6 +187,7 @@ export default class TransactionsStore {
         this.recovered_transactions = this.recovered_transactions?.slice(0, 0);
         this.is_transaction_details_modal_open = false;
         this.open_contracts = {};
+        this.pending_contract_lookups.clear();
     }
 
     registerReactions() {
@@ -222,8 +226,59 @@ export default class TransactionsStore {
                 this.recovered_transactions.includes(trx?.contract_id)
             )
                 return;
-            this.recoverPendingContractsById(trx.contract_id, contract);
+            if (contract) {
+                // A contract instance was handed to us (live recovery) — use it.
+                this.recoverPendingContractsById(trx.contract_id, contract);
+            } else {
+                // No contract in hand (e.g. after a page refresh): ask the API
+                // for this contract's current/final state and reconcile it.
+                this.fetchAndRecoverContractById(trx.contract_id);
+            }
         });
+    }
+
+    async fetchAndRecoverContractById(contract_id: number) {
+        if (
+            !contract_id ||
+            this.recovered_transactions.includes(contract_id) ||
+            this.pending_contract_lookups.has(contract_id)
+        ) {
+            return;
+        }
+
+        // During an active run the live proposal_open_contract stream already
+        // finalizes contracts, so only reach out to the API for the idle /
+        // post-refresh case. Fall back to any cached contract data otherwise.
+        if (this.root_store.run_panel?.is_running || !api_base?.api || !api_base?.is_authorized) {
+            this.recoverPendingContractsById(contract_id, this.open_contracts[contract_id] ?? null);
+            return;
+        }
+
+        this.pending_contract_lookups.add(contract_id);
+        try {
+            const response = (await api_base.api.send({
+                proposal_open_contract: 1,
+                contract_id,
+            })) as unknown as { proposal_open_contract?: ProposalOpenContract };
+            const contract = response?.proposal_open_contract;
+            if (contract?.contract_id) {
+                const id = Number(contract.contract_id);
+                this.open_contracts[id] = contract;
+                // Only finalize contracts that have actually ended. A contract
+                // that is still open must stay pending so the live
+                // proposal_open_contract stream can finalize it once it settles.
+                if (isEnded(contract)) {
+                    this.recoverPendingContractsById(id, contract);
+                }
+            }
+        } catch (error) {
+            // Best-effort: if we can't fetch the contract's final state, leave it
+            // pending rather than breaking the recovery loop.
+            // eslint-disable-next-line no-console
+            console.error('Failed to recover pending contract', contract_id, error);
+        } finally {
+            this.pending_contract_lookups.delete(contract_id);
+        }
     }
 
     updateResultsCompletedContract(contract: ProposalOpenContract) {
@@ -234,7 +289,14 @@ export default class TransactionsStore {
         if (contract.contract_id !== contract_info?.contract_id) {
             this.onBotContractEvent(contract);
 
-            if (contract.contract_id && !this.recovered_transactions.includes(contract.contract_id)) {
+            // Only mark a contract as recovered once it has ended. Marking an
+            // open contract as recovered would make the live recovery listener
+            // skip it when it later settles, leaving it stuck as pending.
+            if (
+                contract.contract_id &&
+                isEnded(contract) &&
+                !this.recovered_transactions.includes(contract.contract_id)
+            ) {
                 this.recovered_transactions.push(contract.contract_id);
             }
             if (
