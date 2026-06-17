@@ -40,6 +40,12 @@ const StoreProvider: React.FC<TStoreProvider> = ({ children, mockStore }) => {
     // until the store is initialized.
     if (!store) return <ChunkLoader message={localize('Initializing Deriv Bot...')} />;
 
+    // Render the loading indicator until the root store is initialized so that
+    // store-dependent children never receive a null store from useStore().
+    if (!store) {
+        return <ChunkLoader message={localize('Initializing Deriv Bot account...')} />;
+    }
+
     return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 };
 
