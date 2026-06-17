@@ -1,10 +1,6 @@
 import { ReactNode } from 'react';
 import { standalone_routes } from '@/components/shared';
-import {
-    LegacyChartsIcon as AnalyticsLogo,
-    LegacyDerivIcon as RobotLogo,
-    LegacyHomeNewIcon as TradershubLogo,
-} from '@deriv/quill-icons/Legacy';
+import { LegacyChartsIcon as AnalyticsLogo, LegacyDerivIcon as RobotLogo } from '@deriv/quill-icons/Legacy';
 import {
     DerivProductBrandLightDerivTraderLogoWordmarkIcon as DerivTraderLogo,
     PartnersProductBrandLightSmarttraderLogoWordmarkIcon as SmarttraderLogo,
@@ -66,13 +62,6 @@ export const platformsConfig: PlatformsConfig[] = [
         showInEU: false,
     },
 ];
-
-export const TRADERS_HUB_LINK_CONFIG = {
-    as: 'a',
-    href: standalone_routes.traders_hub,
-    icon: <TradershubLogo iconSize='xs' />,
-    label: "Trader's Hub",
-};
 
 export const MenuItems: MenuItemsConfig[] = [
     {

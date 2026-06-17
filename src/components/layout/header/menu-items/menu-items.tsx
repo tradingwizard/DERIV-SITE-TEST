@@ -1,12 +1,8 @@
-import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useFirebaseCountriesConfig } from '@/hooks/firebase/useFirebaseCountriesConfig';
 import { useStore } from '@/hooks/useStore';
-import useStoreWalletAccountsList from '@/hooks/useStoreWalletAccountsList';
-import { handleTraderHubRedirect } from '@/utils/traders-hub-redirect';
 import { useTranslations } from '@deriv-com/translations';
 import { MenuItem, Text, useDevice } from '@deriv-com/ui';
-import { MenuItems as items, TRADERS_HUB_LINK_CONFIG } from '../header-config';
+import { MenuItems as items } from '../header-config';
 import './menu-items.scss';
 
 export const MenuItems = observer(() => {
@@ -76,76 +72,4 @@ export const MenuItems = observer(() => {
     );
 });
 
-export const TradershubLink = observer(() => {
-    const { has_wallet = false } = useStoreWalletAccountsList() || {};
-    const store = useStore();
-    const { hubEnabledCountryList } = useFirebaseCountriesConfig();
-
-    const [redirect_url_str, setRedirectUrlStr] = useState<null | string>(null);
-
-    useEffect(() => {
-        const redirectParams = {
-            product_type: 'tradershub' as const,
-            has_wallet,
-            is_virtual: store?.client?.is_virtual,
-            residence: store?.client?.residence,
-            hubEnabledCountryList,
-        };
-        setRedirectUrlStr(handleTraderHubRedirect(redirectParams));
-    }, [has_wallet, store?.client?.is_virtual, store?.client?.residence, hubEnabledCountryList]);
-
-    if (!store) return null;
-
-    const client = store.client ?? {};
-    const getCurrency = client.getCurrency;
-    const currency = getCurrency?.();
-
-    // Check if the account is a demo account
-    // Use the URL parameter to determine if it's a demo account, as this will update when the account changes
-    const urlParams = new URLSearchParams(window.location.search);
-    const account_param = urlParams.get('account');
-    const is_virtual = client.is_virtual || account_param === 'demo' || false;
-
-    // Use the handleTraderHubRedirect function with the is_virtual flag
-
-    // If the redirect_url_str is null, use the default URL with appropriate parameters
-    let href = redirect_url_str;
-    if (redirect_url_str) {
-        // If we have a redirect_url_str, we still need to add the account parameter
-        try {
-            const redirect_url = new URL(redirect_url_str);
-            if (is_virtual) {
-                // For demo accounts, set the account parameter to 'demo'
-                redirect_url.searchParams.set('account', 'demo');
-            } else if (currency) {
-                // For real accounts, set the account parameter to the currency
-                redirect_url.searchParams.set('account', currency);
-            }
-            href = redirect_url.toString();
-        } catch (error) {
-            console.error('Error parsing redirect URL:', error);
-        }
-    }
-
-    return (
-        <MenuItem
-            as='a'
-            className='app-header__menu'
-            href={href ?? undefined}
-            key={TRADERS_HUB_LINK_CONFIG.label}
-            leftComponent={TRADERS_HUB_LINK_CONFIG.icon}
-        >
-            <Text>{TRADERS_HUB_LINK_CONFIG.label}</Text>
-        </MenuItem>
-    );
-});
-
-// Create a namespace for MenuItems to include TradershubLink
-type MenuItemsType = typeof MenuItems & {
-    TradershubLink: typeof TradershubLink;
-};
-
-// Assign TradershubLink to MenuItems
-(MenuItems as MenuItemsType).TradershubLink = TradershubLink;
-
-export default MenuItems as MenuItemsType;
+export default MenuItems;
