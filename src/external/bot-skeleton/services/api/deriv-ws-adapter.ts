@@ -394,6 +394,64 @@ export class DerivWsAdapter {
         return Promise.resolve({});
     }
 
+    // --- DerivAPIBasic convenience methods --------------------------------
+    // The legacy `@deriv/deriv-api` auto-generated a method per API call that
+    // simply wrapped `send`. App code (CoreStoreProvider, stores, services)
+    // calls these directly, so the adapter must keep them. Each maps to the
+    // equivalent request object and resolves the full (translated) response.
+
+    time(): Promise<any> {
+        return this.send({ time: 1 });
+    }
+
+    websiteStatus(): Promise<any> {
+        return this.send({ website_status: 1 });
+    }
+
+    getSettings(): Promise<any> {
+        return this.send({ get_settings: 1 });
+    }
+
+    getAccountStatus(): Promise<any> {
+        return this.send({ get_account_status: 1 });
+    }
+
+    landingCompany(args?: Record<string, any>): Promise<any> {
+        return this.send({ landing_company: 1, ...(args || {}) });
+    }
+
+    activeSymbols(args?: Record<string, any>): Promise<any> {
+        return this.send({ active_symbols: args?.active_symbols ?? 'brief', ...(args || {}) });
+    }
+
+    tradingTimes(args?: Record<string, any>): Promise<any> {
+        return this.send({ trading_times: args?.trading_times ?? 'today', ...(args || {}) });
+    }
+
+    contractsFor(args?: Record<string, any>): Promise<any> {
+        return this.send({ contracts_for: 1, ...(args || {}) });
+    }
+
+    balanceAll(): Promise<any> {
+        return this.send({ balance: 1, account: 'all' });
+    }
+
+    /**
+     * Legacy `logout()` invalidated the session server-side then closed the
+     * socket. On the new platform the OTP socket just needs to be torn down. We
+     * fire a best-effort logout frame (not awaited, so it can never hang) and
+     * always resolve so the caller's navigation/cleanup proceeds.
+     */
+    logout(): Promise<any> {
+        try {
+            this.sendRaw({ logout: 1 });
+        } catch {
+            /* noop */
+        }
+        this.disconnect();
+        return Promise.resolve({ logout: 1 });
+    }
+
     async authorize(token: string): Promise<{ authorize?: any; error?: any }> {
         this.bearer = token;
         try {
