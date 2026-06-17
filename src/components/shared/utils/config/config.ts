@@ -16,15 +16,19 @@ export const livechat_license_id = 12049137;
 export const livechat_client_id = '66aa088aad5a414484c1fd1fa8a5ace7';
 
 // --- New Deriv API platform (GTS Empire) ----------------------------------
-export const GTS_APP_ID = '33bwKJisse4x97RR0zpa0';
-export const DERIV_AUTH_URL = 'https://auth.deriv.com/oauth2/auth';
-export const DERIV_API_REST_BASE = 'https://api.derivws.com';
-export const DERIV_WS_BASE = 'wss://api.derivws.com/trading/v1/options/ws';
-export const DERIV_OAUTH_SCOPE = 'trade account_manage';
+// These are environment-driven (build-time, via rsbuild `define`) so the same
+// build can target staging/prod without code changes. The defaults match the
+// production gtstrader.app values, so an unset env var is still safe.
+export const GTS_APP_ID = process.env.GTS_APP_ID || '33bwKJisse4x97RR0zpa0';
+export const DERIV_AUTH_URL = process.env.DERIV_AUTH_URL || 'https://auth.deriv.com/oauth2/auth';
+export const DERIV_API_REST_BASE = process.env.DERIV_API_REST_BASE || 'https://api.derivws.com';
+export const DERIV_WS_BASE = process.env.DERIV_WS_BASE || 'wss://api.derivws.com/trading/v1/options/ws';
+export const DERIV_OAUTH_SCOPE = process.env.DERIV_OAUTH_SCOPE || 'trade account_manage';
+const DERIV_AFFILIATE_ID = process.env.DERIV_AFFILIATE_ID || '11789';
 export const DERIV_AFFILIATE = {
-    id: '11789',
-    referral_code: '3Z48MP6KHY4D',
-    utm_source: '11789',
+    id: DERIV_AFFILIATE_ID,
+    referral_code: process.env.DERIV_AFFILIATE_REFERRAL || '3Z48MP6KHY4D',
+    utm_source: DERIV_AFFILIATE_ID,
     utm_medium: 'affiliate',
     utm_campaign: 'gts_empire',
 };
