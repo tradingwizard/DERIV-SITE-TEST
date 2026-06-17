@@ -64,14 +64,22 @@ export default class GoogleDriveStore {
         this.setKey();
         this.client = null;
         this.access_token = localStorage.getItem('google_access_token') ?? '';
-        setTimeout(() => {
-            importExternal('https://accounts.google.com/gsi/client').then(() => this.initialiseClient());
-            importExternal('https://apis.google.com/js/api.js').then(() => this.initialise());
-        }, 3000);
+        // Only bootstrap the Google client when Drive credentials are configured.
+        // Without them, initialiseClient() throws "Missing required parameter
+        // client_id" on every load, and the Drive UI can't work anyway.
+        if (this.is_google_drive_enabled) {
+            setTimeout(() => {
+                importExternal('https://accounts.google.com/gsi/client').then(() => this.initialiseClient());
+                importExternal('https://apis.google.com/js/api.js').then(() => this.initialise());
+            }, 3000);
+        }
     }
 
     is_google_drive_token_valid = true;
     is_authorised = !!localStorage.getItem('google_access_token');
+    // True only when Drive OAuth credentials are configured (see setKey). When
+    // false, the Drive UI is hidden and the client is never initialised.
+    is_google_drive_enabled = false;
 
     setGoogleDriveTokenValid = (is_google_drive_token_valid: boolean) => {
         this.is_google_drive_token_valid = is_google_drive_token_valid;
@@ -84,6 +92,7 @@ export default class GoogleDriveStore {
         this.api_key = process.env.GD_API_KEY;
         this.scope = SCOPE;
         this.discovery_docs = DISCOVERY_DOCS;
+        this.is_google_drive_enabled = Boolean(this.client_id && this.app_id && this.api_key);
     };
 
     initialise = () => {

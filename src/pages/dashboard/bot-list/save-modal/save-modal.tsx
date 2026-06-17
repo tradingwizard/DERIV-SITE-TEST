@@ -26,6 +26,7 @@ type TSaveModalForm = {
     button_status: number;
     google_drive_connected?: boolean;
     is_authorised: boolean;
+    is_google_drive_enabled?: boolean;
     is_mobile?: boolean;
     is_onscreen_keyboard_active?: boolean;
     is_save_modal_open?: boolean;
@@ -42,6 +43,7 @@ const SaveModalForm: React.FC<TSaveModalForm> = ({
     bot_name,
     button_status,
     is_authorised,
+    is_google_drive_enabled,
     onConfirmSave,
     onDriveConnect,
     validateBotName,
@@ -116,6 +118,7 @@ const SaveModalForm: React.FC<TSaveModalForm> = ({
                                     />
                                     <RadioGroup.Item
                                         id='drive'
+                                        hidden={!is_google_drive_enabled}
                                         label={
                                             <IconRadio
                                                 text={'Google Drive'}
@@ -172,7 +175,7 @@ const SaveModal = observer(() => {
         updateBotName,
         validateBotName,
     } = save_modal;
-    const { is_authorised, onDriveConnect } = google_drive;
+    const { is_authorised, onDriveConnect, is_google_drive_enabled } = google_drive;
     const { is_onscreen_keyboard_active, setCurrentFocus } = ui;
     const { isMobile } = useDevice();
     const { active_tab } = dashboard;
@@ -196,6 +199,7 @@ const SaveModal = observer(() => {
                 bot_name={bot_name}
                 button_status={button_status}
                 is_authorised={is_authorised}
+                is_google_drive_enabled={is_google_drive_enabled}
                 onConfirmSave={onConfirmSave}
                 onDriveConnect={onDriveConnect}
                 validateBotName={validateBotName}
@@ -218,6 +222,7 @@ const SaveModal = observer(() => {
                 bot_name={bot_name}
                 button_status={button_status}
                 is_authorised={is_authorised}
+                is_google_drive_enabled={is_google_drive_enabled}
                 onConfirmSave={onConfirmSave}
                 onDriveConnect={onDriveConnect}
                 validateBotName={validateBotName}

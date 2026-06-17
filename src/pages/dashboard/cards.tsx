@@ -34,11 +34,12 @@ type TCardArray = {
 };
 
 const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => {
-    const { dashboard, load_modal, quick_strategy } = useStore();
+    const { dashboard, load_modal, quick_strategy, google_drive } = useStore();
     const { toggleLoadModal, setActiveTabIndex } = load_modal;
     const { isDesktop } = useDevice();
     const { onCloseDialog, dialog_options, is_dialog_open, setActiveTab, setPreviewOnPopup } = dashboard;
     const { setFormVisibility } = quick_strategy;
+    const { is_google_drive_enabled } = google_drive;
 
     const openGoogleDriveDialog = () => {
         toggleLoadModal();
@@ -113,6 +114,10 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
         },
     ];
 
+    const visible_actions = is_google_drive_enabled
+        ? actions
+        : actions.filter(action => action.id !== 'google-drive');
+
     return React.useMemo(
         () => (
             <div
@@ -126,7 +131,7 @@ const Cards = observer(({ is_mobile, has_dashboard_strategies }: TCardProps) => 
                     })}
                     id='tab__dashboard__table__tiles'
                 >
-                    {actions.map(icons => {
+                    {visible_actions.map(icons => {
                         const { icon, content, callback, id } = icons;
                         return (
                             <div
