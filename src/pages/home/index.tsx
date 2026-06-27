@@ -11,36 +11,36 @@ const PREMIUM_SOFTWARE_URL = 'https://www.gtsempire.com/software/';
 
 const features = [
     {
-        title: 'Intelligent Signal Analysis',
+        title: 'Less emotional trading',
         description:
-            'Our AI scans price action, volatility and momentum across markets in real time — surfacing only the highest-conviction setups.',
+            'Rules are set before execution, so you are not reacting to every candle under pressure.',
         icon: '◆',
     },
     {
-        title: 'Effortless Automation',
+        title: 'Cleaner risk control',
         description:
-            'Configure your strategy once. The platform handles every entry, exit and adjustment for you, around the clock, with absolute discipline.',
+            'Stake, target, stop loss, and session limits stay visible before the trade begins.',
         icon: '⚙',
     },
     {
-        title: 'Curated Strategy Vault',
+        title: 'Faster execution',
         description:
-            'Access a library of professionally engineered options strategies — or build your own using a clean visual editor. No code, ever.',
+            'The software handles repetitive actions while you focus on the trading plan.',
         icon: '✦',
     },
     {
-        title: 'Institutional Risk Controls',
+        title: 'Better learning curve',
         description:
-            'Daily loss caps, take-profit ladders and position sizing logic come built-in. Your downside is always measured. Always.',
+            'You can review what worked, what failed, and what needs adjustment.',
         icon: '◈',
     },
 ];
 
 const stats = [
-    { value: '24 / 7', label: 'Always-on execution' },
-    { value: '< 1s', label: 'Avg. trade response' },
-    { value: '50+', label: 'Curated strategies' },
-    { value: '0', label: 'Lines of code' },
+    { value: '24/7', label: 'Trading tools available anytime' },
+    { value: '<15 min', label: 'Simple setup for serious traders' },
+    { value: '50+', label: 'Structured tools and presets' },
+    { value: '0 hype', label: 'Risk-first trading approach' },
 ];
 
 const reveal = {
@@ -49,53 +49,59 @@ const reveal = {
 };
 
 const accessHighlights = [
-    { label: 'Deriv synthetic traders', meta: 'Built for focus' },
-    { label: 'AI-powered trading software', meta: 'Premium suite' },
-    { label: 'Exclusive strategies', meta: 'Free for now' },
-    { label: 'Workspace + Builder', meta: 'One flow' },
+    { label: 'Deriv options focused', meta: 'Built for structure' },
+    { label: 'Risk-first workflow', meta: 'Rules before execution' },
+    { label: 'AI-powered software', meta: 'Premium access' },
+    { label: 'Workspace + Builder', meta: 'One disciplined flow' },
 ];
 
 const softwareSuite = [
     {
-        name: 'Empire Velocity',
-        category: 'Speed Execution',
-        market: 'Synthetic volatility indices',
-        description: 'A fast-response execution suite shaped for traders who want disciplined synthetic-market timing.',
+        name: 'Prime Volatility',
+        category: 'Structured volatility',
+        market: 'Volatility markets',
+        description:
+            'A structured volatility module for traders who want cleaner execution, controlled risk settings, and a more disciplined way to approach fast-moving markets.',
         visual: 'velocity',
     },
     {
-        name: 'Crown Accumulator',
-        category: 'Accumulator Suite',
-        market: 'Accumulator contracts',
-        description: 'A premium accumulator workflow with layered control, clean access, and structured progression.',
+        name: 'Crash Boom Automator',
+        category: 'Crash and Boom',
+        market: 'Crash/Boom markets',
+        description:
+            'Designed for Crash and Boom traders who want speed, structure, and predefined rules before market movement begins.',
         visual: 'crown',
     },
     {
-        name: 'Empire Vision AI',
-        category: 'AI Entry Analysis',
-        market: 'Synthetic digit conditions',
-        description: 'A scanning interface for entry analysis, condition review, and focused workspace execution.',
+        name: 'Engine Titan X1',
+        category: 'Advanced execution',
+        market: 'Synthetic options',
+        description:
+            'A focused execution engine for traders who prefer a sharper, more advanced setup with clear controls and fast decision support.',
         visual: 'vision',
     },
     {
         name: 'Empire Wizard AI',
-        category: 'Adaptive Software',
-        market: 'Synthetic over/under setups',
-        description: 'A dark control core for software-assisted execution with visible logic and command points.',
+        category: 'Guided automation',
+        market: 'Structured logic',
+        description:
+            'A guided automation module built to help traders move away from random entries and start working with structured logic.',
         visual: 'wizard',
     },
     {
-        name: 'Thunder Parity Pro',
-        category: 'Parity Analysis',
-        market: 'Even/Odd synthetic markets',
-        description: 'A split-signal parity chamber for traders focused on even/odd synthetic market structure.',
+        name: 'Thunder Fury Pro',
+        category: 'Active conditions',
+        market: 'Synthetic options',
+        description:
+            'A stronger module for traders who want to test more active conditions while keeping risk management and trading rules visible.',
         visual: 'thunder',
     },
     {
-        name: 'Royal Parity AI',
-        category: 'Digit Intelligence',
-        market: 'Even/Odd synthetic markets',
-        description: 'A refined parity engine with symmetrical digit panels, AI logic, and premium access flow.',
+        name: 'Voodoo Matrix AI',
+        category: 'Premium automation',
+        market: 'Synthetic options',
+        description:
+            'A premium module for traders who understand that automation works best with patience, testing, and disciplined risk control.',
         visual: 'royal',
     },
 ];
@@ -103,41 +109,41 @@ const softwareSuite = [
 const premiumSteps = [
     {
         number: '01',
-        title: 'Choose exclusive software',
-        text: 'Enter the premium software suite and select the strategy style that fits your synthetic-market workflow.',
+        title: 'Choose your module',
+        text: 'Pick the software engine that matches your experience level, preferred market, and trading style.',
     },
     {
         number: '02',
-        title: 'Connect your Deriv account',
-        text: 'Use the secure Deriv account connection so the workspace can prepare the correct trading environment.',
+        title: 'Set your rules',
+        text: 'Define stake size, take profit, stop loss, entry conditions, and session limits before execution.',
     },
     {
         number: '03',
-        title: 'Test in the workspace',
-        text: 'Review the setup, understand the flow, and test the software from a clean workspace before running it.',
+        title: 'Test before scaling',
+        text: 'Use demo or small capital first so you understand how the setup behaves before increasing exposure.',
     },
     {
         number: '04',
-        title: 'Run from the Builder',
-        text: 'Move into the Builder and manage execution from a focused interface built for Deriv synthetic traders.',
+        title: 'Execute with discipline',
+        text: 'Let the software support your plan while you remain responsible for every trading decision.',
     },
 ];
 
 const testimonials = [
     {
-        quote: 'GTS Empire removed every emotional decision from my trading day. The discipline is unmatched — I finally trust my system.',
-        name: 'Marcus A.',
-        role: 'Full-time options trader',
+        quote: 'I stopped jumping into random trades. The setup forced me to think about my rules first.',
+        name: 'GTS Empire User',
+        role: '',
     },
     {
-        quote: 'I went from inconsistent results to a process I can repeat. The strategy vault alone saved me months of research.',
-        name: 'Priya S.',
-        role: 'Active investor',
+        quote: 'What I liked most was the structure. It made Deriv options feel less confusing.',
+        name: 'Deriv Options Trader',
+        role: '',
     },
     {
-        quote: 'Setup was effortless and the platform feels built for serious traders. This is what premium automation should look like.',
-        name: 'Daniel K.',
-        role: 'Swing trader',
+        quote: 'It does not remove risk, but it helped me approach the market with more discipline.',
+        name: 'Software User',
+        role: '',
     },
 ];
 
@@ -278,17 +284,19 @@ const Home = () => {
                                 Built for Deriv options traders
                             </span>
                             <h2>
-                                A cleaner way to trade with structure on Deriv.
+                                Trade with structure, not pressure.
                             </h2>
                             <p>
-                                GTS Empire brings your trading tools into one focused workspace:
-                                free AI-powered trading software, Deriv account connection, demo
-                                testing, and Builder launch. It is designed to help traders follow
-                                a planned setup instead of jumping between random entries.
+                                Most traders do not lose because they lack ambition. They lose
+                                because they enter without a clear plan, change rules under
+                                pressure, and let emotion control execution. GTS Empire gives Deriv
+                                options traders a cleaner way to approach the market through
+                                structured automation, risk settings, and tools designed to support
+                                disciplined trading decisions.
                             </p>
                             <div className='gts-home__suite-actions'>
                                 <button className='gts-home__premium-button' onClick={goToSoftware}>
-                                    Start With Free Software
+                                    Explore the software
                                 </button>
                                 <a
                                     className='gts-home__premium-button gts-home__premium-button--ghost'
@@ -296,7 +304,7 @@ const Home = () => {
                                     target='_blank'
                                     rel='noopener noreferrer'
                                 >
-                                    View Premium Software
+                                    See how it works
                                 </a>
                             </div>
                         </div>
@@ -364,12 +372,13 @@ const Home = () => {
                             <div className='gts-home__light-signal' />
                         </div>
                         <div className='gts-home__light-bridge-copy'>
-                            <span className='gts-home__eyebrow'>Currently free access</span>
-                            <h2>Premium software, open for a limited time.</h2>
+                            <span className='gts-home__eyebrow'>Premium Trading Software</span>
+                            <h2>Automation built for traders who want control, not noise.</h2>
                             <p>
-                                The featured AI-powered trading software below is premium by design,
-                                but available free right now inside GTS Empire for Deriv synthetic
-                                traders who want a cleaner workspace.
+                                This is not about guessing entries or chasing every market move. GTS
+                                Empire is built to help you define your trading rules, manage risk
+                                before execution, and approach Deriv options with more discipline.
+                                You stay in control. The software helps you execute with structure.
                             </p>
                         </div>
                     </div>
@@ -386,13 +395,15 @@ const Home = () => {
                     <div className='gts-home__container'>
                         <div className='gts-home__premium-head'>
                             <span className='gts-home__eyebrow gts-home__eyebrow--light'>
-                                Featured AI-powered trading software
+                                Built for Different Trading Styles
                             </span>
-                            <h2>Six premium modules, built to feel exclusive.</h2>
+                            <h2>Choose the engine that matches how you trade.</h2>
                             <p>
-                                Each software module gets its own live 3D identity, motion system,
-                                synthetic-market focus, and free limited-time access inside the
-                                app workspace.
+                                Every trader is different. Some want simple structure. Some want
+                                faster execution. Some want a more advanced setup. GTS Empire gives
+                                you access to premium modules designed around different market
+                                conditions, risk levels, and trading styles. Start simple. Test
+                                carefully. Scale only when the setup makes sense.
                             </p>
                         </div>
                         <div className='gts-home__software-grid'>
@@ -415,11 +426,11 @@ const Home = () => {
                                     <h3>{software.name}</h3>
                                     <p>{software.description}</p>
                                     <div className='gts-home__software-meta'>
-                                        <span>Synthetic focus</span>
+                                        <span>Market focus</span>
                                         <strong>{software.market}</strong>
                                     </div>
                                     <button className='gts-home__software-link' onClick={goToSoftware}>
-                                        Launch in App
+                                        Learn more
                                     </button>
                                 </article>
                             ))}
@@ -439,13 +450,15 @@ const Home = () => {
                     <div className='gts-home__container gts-home__premium-how-grid'>
                         <div className='gts-home__premium-how-copy'>
                             <span className='gts-home__eyebrow gts-home__eyebrow--light'>
-                                How it works
+                                From Software to Execution
                             </span>
-                            <h2>From premium software to Builder execution.</h2>
+                            <h2>Every trade should have a plan before it starts.</h2>
                             <p>
-                                Traders who want extremely exclusive, top-notch strategies can
-                                explore the premium software collection and move into the GTS
-                                Empire workspace with a clean, guided flow.
+                                Good software should not make you reckless. It should help you slow
+                                down, define your setup, control your risk, and execute with less
+                                emotion. GTS Empire gives you a practical trading workflow: choose
+                                your module, set your rules, test your setup, and trade with
+                                discipline.
                             </p>
                             <a
                                 className='gts-home__premium-button'
@@ -453,7 +466,7 @@ const Home = () => {
                                 target='_blank'
                                 rel='noopener noreferrer'
                             >
-                                Explore Premium Software
+                                Start with the right module
                             </a>
                         </div>
                         <div className='gts-home__premium-steps'>
@@ -503,13 +516,15 @@ const Home = () => {
                         </div>
                         <div className='gts-home__api-copy'>
                             <span className='gts-home__eyebrow gts-home__eyebrow--light'>
-                                Deriv API workspace
+                                Built Around Deriv Options
                             </span>
-                            <h2>Built for Deriv traders without pretending to be Deriv.</h2>
+                            <h2>Made for Deriv traders. Independent from Deriv.</h2>
                             <p>
-                                GTS Empire is designed for Deriv synthetic traders who want an
-                                all-in-one workspace for premium software access, secure connection,
-                                testing, Builder flow, and execution visibility.
+                                GTS Empire is designed for traders using Deriv synthetic indices and
+                                options. The goal is to help you approach trading with better
+                                structure, automation, and risk awareness. GTS Empire is not owned
+                                by, operated by, or officially endorsed by Deriv. Trading involves
+                                risk, and results are never guaranteed.
                             </p>
                             <a
                                 href={DERIV_ACCOUNT_URL}
@@ -517,7 +532,7 @@ const Home = () => {
                                 target='_blank'
                                 rel='noopener noreferrer'
                             >
-                                Create Deriv Trading Account
+                                Explore trading tools
                             </a>
                         </div>
                     </div>
@@ -527,20 +542,21 @@ const Home = () => {
                     <div className='gts-home__container gts-home__limited-inner'>
                         <div>
                             <span className='gts-home__eyebrow gts-home__eyebrow--light'>
-                                Limited premium access
+                                Premium automation access
                             </span>
                             <h2>
-                                Premium AI-powered trading software is currently available
-                                free for a limited time.
+                                Premium automation access is currently open.
                             </h2>
                             <p>
-                                Open the workspace, explore the software suite, and move from
-                                selection to Builder execution without touching the trading logic.
+                                Get access to selected AI-powered trading software and start
+                                building a cleaner, more disciplined Deriv options workflow. No
+                                hype. No guaranteed profits. Just structured tools for traders who
+                                want to execute better.
                             </p>
                         </div>
                         <div className='gts-home__limited-actions'>
                             <button className='gts-home__premium-button' onClick={goToApp}>
-                                Launch App
+                                Claim access
                             </button>
                             <a
                                 href={PREMIUM_SOFTWARE_URL}
@@ -548,7 +564,7 @@ const Home = () => {
                                 target='_blank'
                                 rel='noopener noreferrer'
                             >
-                                Explore Premium Software
+                                Talk to support
                             </a>
                         </div>
                     </div>
@@ -558,15 +574,15 @@ const Home = () => {
             <section id='features' className='gts-home__section'>
                 <div className='gts-home__container'>
                     <div className='gts-home__section-head'>
-                        <span className='gts-home__eyebrow'>The Platform</span>
+                        <span className='gts-home__eyebrow'>Why Traders Use It</span>
                         <h2>
-                            An unfair advantage,
+                            What changes when your
                             <br />
-                            engineered for clarity.
+                            trading has structure.
                         </h2>
                         <p>
-                            Every feature is designed to remove friction and protect your capital —
-                            so you can focus on the strategy, not the screen.
+                            The biggest upgrade is not just automation. It is knowing what should
+                            happen before, during, and after the trade.
                         </p>
                     </div>
                     <div className='gts-home__features'>
@@ -587,22 +603,24 @@ const Home = () => {
                         <img src={featureBulbChart} alt='Premium trading chart on dark glass' />
                     </div>
                     <div className='gts-home__showcase-copy'>
-                        <span className='gts-home__eyebrow'>Why It Works</span>
+                        <span className='gts-home__eyebrow'>For Serious Traders</span>
                         <h2>
-                            Ideas only matter if you can <em>execute them</em>.
+                            Ideas only matter when you can <em>execute them</em>.
                         </h2>
                         <p>
-                            Most traders lose to themselves — hesitation, overtrading, fear of
-                            missing out. GTS Empire turns your strategy into a system that runs
-                            with discipline you simply cannot replicate manually.
+                            Many traders know what they should do, but struggle to follow their own
+                            rules when the market starts moving. GTS Empire helps you move from
+                            random decisions to a more structured workflow: choose the module,
+                            define the risk, test the setup, then trade with discipline.
                         </p>
                         <ul className='gts-home__showcase-list'>
-                            <li>Removes emotion from every entry and exit.</li>
-                            <li>Backtested logic with transparent performance.</li>
-                            <li>Adjusts to volatility regimes automatically.</li>
+                            <li>Built around Deriv options trading</li>
+                            <li>Designed for beginners and existing traders</li>
+                            <li>Supports automation, structure, and risk planning</li>
+                            <li>No guaranteed profit, no fake certainty, no hype</li>
                         </ul>
                         <button className='gts-home__cta-primary gts-home__cta-primary--ghost' onClick={goToApp}>
-                            Explore the platform
+                            Explore the software
                             <span className='gts-home__cta-arrow' aria-hidden='true'>
                                 →
                             </span>
@@ -614,8 +632,8 @@ const Home = () => {
             <section id='testimonials' className='gts-home__section'>
                 <div className='gts-home__container'>
                     <div className='gts-home__section-head'>
-                        <span className='gts-home__eyebrow'>The Empire</span>
-                        <h2>Traders who chose discipline over guesswork.</h2>
+                        <span className='gts-home__eyebrow'>Trader Feedback</span>
+                        <h2>Traders choosing process over pressure.</h2>
                     </div>
                     <div className='gts-home__testimonials'>
                         {testimonials.map(t => (
