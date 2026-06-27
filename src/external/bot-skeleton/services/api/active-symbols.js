@@ -4,6 +4,15 @@ import { config } from '../../constants/config';
 import PendingPromise from '../../utils/pending-promise';
 import { api_base } from './api-base';
 
+const isDebugDeriv = () =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
+
+const debugDeriv = (label, payload) => {
+    if (!isDebugDeriv()) return;
+    // eslint-disable-next-line no-console
+    console.info(`[debug_deriv] ${label}`, payload);
+};
+
 export default class ActiveSymbols {
     constructor(trading_times) {
         this.active_symbols = [];
@@ -50,7 +59,19 @@ export default class ActiveSymbols {
 
         this.init_promise.resolve();
 
-        console.log(this.active_symbols);
+        debugDeriv('active symbols processed', {
+            count: this.active_symbols.length,
+            markets: Object.keys(this.processed_symbols),
+            first_synthetics: this.active_symbols
+                .filter(symbol => symbol.market === 'synthetic_index')
+                .slice(0, 8)
+                .map(symbol => ({
+                    symbol: symbol.symbol,
+                    display_name: symbol.display_name,
+                    market: symbol.market,
+                    submarket: symbol.submarket,
+                })),
+        });
         return this.active_symbols;
     }
 

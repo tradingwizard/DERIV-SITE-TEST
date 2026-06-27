@@ -85,10 +85,26 @@ const coerce = (obj: Record<string, any>, keys: string[]) => {
 const DIGIT_CONTRACT_CATEGORIES = new Set(['matchesdiffers', 'evenodd', 'overunder']);
 const DIGIT_CONTRACT_TYPES = new Set(['DIGITMATCH', 'DIGITDIFF', 'DIGITEVEN', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER']);
 
+const isDebugDeriv = () =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
+
+const debugDeriv = (label: string, payload: any) => {
+    if (!isDebugDeriv()) return;
+    // eslint-disable-next-line no-console
+    console.info(`[debug_deriv] ${label}`, payload);
+};
+
+const normalizeMarket = (market?: string): string | undefined => {
+    if (market === 'derived') return 'synthetic_index';
+    return market;
+};
+
 const normalizeContractRow = (contract: Record<string, any>): Record<string, any> => {
     const c = { ...contract };
 
     if (c.underlying_symbol && !c.symbol) c.symbol = c.underlying_symbol;
+    if (c.underlying_symbol_type && !c.submarket) c.submarket = c.underlying_symbol_type;
+    if (c.market) c.market = normalizeMarket(c.market);
     if (c.min_duration && !c.min_contract_duration) c.min_contract_duration = c.min_duration;
     if (c.max_duration && !c.max_contract_duration) c.max_contract_duration = c.max_duration;
     if (c.min_contract_duration && typeof c.min_contract_duration === 'number') c.min_contract_duration = `${c.min_contract_duration}s`;
@@ -340,9 +356,18 @@ export class DerivWsAdapter {
             this.normalizeTradeParameters(req);
         }
 
-        if (typeof req.contracts_for === 'string') {
+        if (req.__legacy_contracts_for) {
+            delete req.__legacy_contracts_for;
+        } else if (typeof req.contracts_for === 'string') {
             req.underlying_symbol = req.contracts_for;
             req.contracts_for = 1;
+        }
+
+        if (req.contracts_for) {
+            debugDeriv('contracts_for request', {
+                contracts_for: req.contracts_for,
+                underlying_symbol: req.underlying_symbol,
+            });
         }
 
         return req;
@@ -359,9 +384,22 @@ export class DerivWsAdapter {
                 if (s.pip_size != null && s.pip == null) s.pip = s.pip_size;
                 if (s.underlying_symbol_name && !s.display_name) s.display_name = s.underlying_symbol_name;
                 if (s.underlying_symbol_type && !s.symbol_type) s.symbol_type = s.underlying_symbol_type;
+                if (s.market) s.market = normalizeMarket(s.market);
                 if (!s.market_display_name) s.market_display_name = humanize(s.market);
                 if (!s.submarket_display_name) s.submarket_display_name = humanize(s.submarket);
                 return s;
+            });
+            debugDeriv('active_symbols response', {
+                count: msg.active_symbols.length,
+                first_synthetics: msg.active_symbols
+                    .filter((s: any) => s.market === 'synthetic_index')
+                    .slice(0, 8)
+                    .map((s: any) => ({
+                        symbol: s.symbol,
+                        display_name: s.display_name,
+                        market: s.market,
+                        submarket: s.submarket,
+                    })),
             });
         }
 
@@ -370,6 +408,19 @@ export class DerivWsAdapter {
                 ...msg.contracts_for,
                 available: msg.contracts_for.available.map(normalizeContractRow),
             };
+            debugDeriv('contracts_for response', {
+                count: msg.contracts_for.available.length,
+                sample: msg.contracts_for.available.slice(0, 12).map((c: any) => ({
+                    contract_type: c.contract_type,
+                    contract_category: c.contract_category,
+                    barrier_category: c.barrier_category,
+                    min_contract_duration: c.min_contract_duration,
+                    max_contract_duration: c.max_contract_duration,
+                    expiry_type: c.expiry_type,
+                    market: c.market,
+                    submarket: c.submarket,
+                })),
+            });
         }
 
         if (msg.msg_type === 'proposal' && msg.proposal) {

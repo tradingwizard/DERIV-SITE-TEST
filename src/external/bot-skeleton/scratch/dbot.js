@@ -14,6 +14,15 @@ import { isAllRequiredBlocksEnabled, updateDisabledBlocks, validateErrorOnBlockD
 
 const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
 
+const isDebugDeriv = () =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
+
+const debugDeriv = (label, payload) => {
+    if (!isDebugDeriv()) return;
+    // eslint-disable-next-line no-console
+    console.info(`[debug_deriv] ${label}`, payload);
+};
+
 const getSafeDropdownValue = (options, current_value) => {
     if (options.some(option => isValidDropdownOption(option) && option[1] === current_value)) {
         return current_value;
@@ -72,6 +81,14 @@ class DBot {
                             const category_field = this.getField('TRADETYPECAT_LIST');
                             if (category_field) {
                                 const safe_category = getSafeDropdownValue(categories, category);
+                                debugDeriv('builder category dropdown', {
+                                    market,
+                                    submarket,
+                                    symbol,
+                                    previous: category,
+                                    selected: safe_category,
+                                    options: categories,
+                                });
                                 category_field.updateOptions(categories, {
                                     default_value: safe_category,
                                     should_pretend_empty: true,
@@ -81,8 +98,18 @@ class DBot {
                                 contracts_for?.getTradeTypes?.(market, submarket, symbol, safe_category).then(trade_types => {
                                     const trade_type_field = this.getField('TRADETYPE_LIST');
                                     if (trade_type_field) {
+                                        const safe_trade_type = getSafeDropdownValue(trade_types, trade_type);
+                                        debugDeriv('builder trade type dropdown', {
+                                            market,
+                                            submarket,
+                                            symbol,
+                                            category: safe_category,
+                                            previous: trade_type,
+                                            selected: safe_trade_type,
+                                            options: trade_types,
+                                        });
                                         trade_type_field.updateOptions(trade_types, {
-                                            default_value: getSafeDropdownValue(trade_types, trade_type),
+                                            default_value: safe_trade_type,
                                             should_pretend_empty: true,
                                             event_group: event.group,
                                         });
@@ -107,8 +134,18 @@ class DBot {
                     } else if (is_trade_type_cat_list_change && event.blockId === this.id) {
                         contracts_for?.getTradeTypes?.(market, submarket, symbol, category).then(trade_types => {
                             const trade_type_field = this.getField('TRADETYPE_LIST');
+                            const safe_trade_type = getSafeDropdownValue(trade_types, trade_type);
+                            debugDeriv('builder trade type dropdown', {
+                                market,
+                                submarket,
+                                symbol,
+                                category,
+                                previous: trade_type,
+                                selected: safe_trade_type,
+                                options: trade_types,
+                            });
                             trade_type_field.updateOptions(trade_types, {
-                                default_value: getSafeDropdownValue(trade_types, trade_type),
+                                default_value: safe_trade_type,
                                 should_pretend_empty: true,
                                 event_group: event.group,
                             });

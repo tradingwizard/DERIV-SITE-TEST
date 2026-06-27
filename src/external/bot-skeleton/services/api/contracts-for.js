@@ -2,6 +2,15 @@ import { config } from '../../constants/config';
 import PendingPromise from '../../utils/pending-promise';
 import { api_base } from './api-base';
 
+const isDebugDeriv = () =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
+
+const debugDeriv = (label, payload) => {
+    if (!isDebugDeriv()) return;
+    // eslint-disable-next-line no-console
+    console.info(`[debug_deriv] ${label}`, payload);
+};
+
 export default class ContractsFor {
     constructor({ ws, server_time }) {
         this.cache_age_in_min = 10;
@@ -200,18 +209,37 @@ export default class ContractsFor {
             }
 
             this.retrieving_contracts_for[symbol] = new PendingPromise();
-            const response = await api_base.api.send({ contracts_for: symbol });
+            let response = await api_base.api.send({ contracts_for: symbol });
+            let contracts = response?.contracts_for?.available || [];
+
+            if (response.error || contracts.length === 0) {
+                debugDeriv('contracts_for fallback request', {
+                    symbol,
+                    first_error: response?.error?.code || response?.error?.message,
+                    first_count: contracts.length,
+                });
+                response = await api_base.api.send({ contracts_for: symbol, __legacy_contracts_for: true });
+                contracts = response?.contracts_for?.available || [];
+            }
 
             if (response.error) {
+                debugDeriv('contracts_for failed', {
+                    symbol,
+                    error: response.error?.code || response.error?.message,
+                });
+                this.retrieving_contracts_for[symbol].resolve();
+                delete this.retrieving_contracts_for[symbol];
                 return [];
             }
 
-            const {
-                contracts_for: { available: contracts },
-            } = response;
-
             // We don't offer forward-starting contracts in bot.
             const filtered_contracts = contracts.filter(c => c.start_type !== 'forward');
+            debugDeriv('contracts_for cached', {
+                symbol,
+                count: filtered_contracts.length,
+                categories: [...new Set(filtered_contracts.map(c => c.contract_category))],
+                types: filtered_contracts.slice(0, 12).map(c => c.contract_type),
+            });
 
             this.contracts_for[symbol] = {
                 contracts: filtered_contracts,
@@ -317,17 +345,26 @@ export default class ContractsFor {
         }
 
         if (durations.length === 0) {
-            return contracts_for_category.length > 0
+            const fallback_durations = contracts_for_category.length > 0
                 ? [
                       { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][1], min: 1, max: 10 },
                       { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][1], min: 1, max: 59 },
                       { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][1], min: 1, max: 60 },
                   ]
                 : NOT_AVAILABLE_DURATIONS;
+            debugDeriv('duration fallback', {
+                symbol,
+                trade_type,
+                contracts_for_category: contracts_for_category.length,
+                durations: fallback_durations,
+            });
+            return fallback_durations;
         }
 
         // Maintain order based on duration unit
-        return durations.sort((a, b) => getDurationIndex(a.unit) - getDurationIndex(b.unit));
+        const sorted_durations = durations.sort((a, b) => getDurationIndex(a.unit) - getDurationIndex(b.unit));
+        debugDeriv('duration options', { symbol, trade_type, durations: sorted_durations });
+        return sorted_durations;
     }
 
     async getPredictionRange(symbol, trade_type) {
@@ -585,13 +622,16 @@ export default class ContractsFor {
         if (trade_type_categories.length > 0) {
             const category_names = Object.keys(TRADE_TYPE_CATEGORY_NAMES);
 
-            return trade_type_categories.sort((a, b) => {
+            const sorted_categories = trade_type_categories.sort((a, b) => {
                 const index_a = category_names.findIndex(c => c === a[1]);
                 const index_b = category_names.findIndex(c => c === b[1]);
                 return index_a - index_b;
             });
+            debugDeriv('trade type categories', { market, submarket, symbol, categories: sorted_categories });
+            return sorted_categories;
         }
 
+        debugDeriv('trade type categories unavailable', { market, submarket, symbol, contracts: contracts.length });
         return NOT_AVAILABLE_DROPDOWN_OPTIONS;
     }
 
@@ -622,7 +662,9 @@ export default class ContractsFor {
             }
         }
 
-        return trade_types.length > 0 ? trade_types : config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+        const options = trade_types.length > 0 ? trade_types : config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+        debugDeriv('trade type options', { market, submarket, symbol, trade_type_category, options });
+        return options;
     }
 
     isDisabledOption(compare_obj) {
