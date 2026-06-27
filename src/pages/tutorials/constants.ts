@@ -11,7 +11,7 @@ export const user_guide_content = (): TUserGuideContent[] => [
         id: 1,
         type: 'Tour',
         subtype: 'OnBoard',
-        content: localize('Get started on GTS Empire'),
+        content: localize('Get started on Deriv'),
         src: getImageLocation('dbot-onboard-tour.png'),
         search_id: `${USER_GUIDE}-0`,
     },
@@ -19,7 +19,7 @@ export const user_guide_content = (): TUserGuideContent[] => [
         id: 2,
         type: 'Tour',
         subtype: 'BotBuilder',
-        content: localize('Let’s build a bot!'),
+        content: localize('Introduction on trading robots'),
         src: getImageLocation('bot-builder-tour.png'),
         search_id: `${USER_GUIDE}-1`,
     },
@@ -29,7 +29,7 @@ export const guide_content = (): TGuideContent[] => [
     {
         id: 1,
         type: 'DBotVideo',
-        content: localize('An introduction to GTS Empire'),
+        content: localize('An introduction to Deriv'),
         url: 'https://www.youtube.com/embed/lthEgaIY1uw',
         src: getImageLocation('intro_to_deriv_bot.png'),
         search_id: `${VIDEOS}-0`,
@@ -37,7 +37,7 @@ export const guide_content = (): TGuideContent[] => [
     {
         id: 2,
         type: 'DBotVideo',
-        content: localize('How to build a basic trading bot with GTS Empire'),
+        content: localize('How to get started on Deriv'),
         url: 'https://www.youtube.com/embed/mnpi2g7YakU',
         src: getImageLocation('build_a_bot.png'),
         search_id: `${VIDEOS}-1`,
@@ -45,7 +45,7 @@ export const guide_content = (): TGuideContent[] => [
     {
         id: 3,
         type: 'DBotVideo',
-        content: localize('How to use Martingale strategy on GTS Empire'),
+        content: localize('Introduction to Martingale on Deriv'),
         url: 'https://www.youtube.com/embed/FSslvF7P00I',
         src: getImageLocation('how_to_use_martingale.jpg'),
         search_id: `${VIDEOS}-2`,
@@ -53,7 +53,7 @@ export const guide_content = (): TGuideContent[] => [
     {
         id: 4,
         type: 'DBotVideo',
-        content: localize('Introducing Accumulator Options on GTS Empire: Available for automated trading'),
+        content: localize('Introducing Accumulator Options on Deriv: Available for automated trading'),
         url: 'https://www.youtube.com/embed/uMBBmdNaadU',
         src: getImageLocation('introducing_accumulators_on_deriv_bot.png'),
         search_id: `${VIDEOS}-3`,

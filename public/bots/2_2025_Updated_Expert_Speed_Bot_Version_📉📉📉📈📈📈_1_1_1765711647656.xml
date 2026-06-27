@@ -124,7 +124,7 @@
       
       <block type="procedures_callnoreturn" id="eP/^XD=g@h_l8kgpnWV`">
         
-        <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+        <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
           
           <arg name="Target Profit"></arg>
           
@@ -254,7 +254,7 @@
           
           <block type="procedures_callreturn" id="$f6^)PtfgsT51EC]w6ar">
             
-            <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's Trade Again">
+            <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity Trade Again">
               
               <arg name="[Win Result]"></arg>
               
@@ -314,7 +314,7 @@
   
   <block type="procedures_callnoreturn" id="vzo!]3ykF}2Hp36DN=x/" disabled="true" x="0" y="966">
     
-    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
       
       <arg name="Target Profit"></arg>
       
@@ -396,7 +396,7 @@
   
   <block type="procedures_callnoreturn" id="oLme2Pw2dydCe-N)XId-" disabled="true" x="0" y="1070">
     
-    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
       
       <arg name="Target Profit"></arg>
       
@@ -478,7 +478,7 @@
   
   <block type="procedures_callnoreturn" id="}12X9)N=@4n3U@.Z9X6s" disabled="true" x="0" y="1174">
     
-    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
       
       <arg name="Target Profit"></arg>
       
@@ -560,7 +560,7 @@
   
   <block type="procedures_callnoreturn" id="O0=kE3}}T*#5%;KgTzCO" disabled="true" x="0" y="1278">
     
-    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
       
       <arg name="Target Profit"></arg>
       
@@ -650,9 +650,9 @@
     
     </mutation>
     
-    <field name="NAME">Daily Profit's Trade Again</field>
+    <field name="NAME">Empire Velocity Trade Again</field>
     
-    <comment pinned="false" h="200" w="200">FRUITFELLA's Management ver. 3.0</comment>
+    <comment pinned="false" h="200" w="200">Empire Velocity management</comment>
     
     <statement name="STACK">
       
@@ -1882,7 +1882,7 @@
   
   <block type="procedures_callnoreturn" id="_)fv$gzfiKs^|?~K?y1T" disabled="true" x="0" y="1478">
     
-    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Daily Profit's System">
+    <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Velocity System">
       
       <arg name="Target Profit"></arg>
       
@@ -1980,7 +1980,7 @@
     
     </mutation>
     
-    <field name="NAME">Daily Profit's System</field>
+    <field name="NAME">Empire Velocity System</field>
     
     <comment pinned="false" h="200" w="200">Describe this function...</comment>
     
@@ -1996,7 +1996,7 @@
           
           <block type="text" id="]:kuR~GaXPw7DW0I[;?+">
             
-            <field name="TEXT">Bot Starts! Good Luck! - Daily Profit Corp</field>
+            <field name="TEXT">Empire Velocity is ready. GTS Empire automation loaded.</field>
           
           </block>
         

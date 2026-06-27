@@ -12,7 +12,7 @@
  * `disconnect`, `getSelfExclusion`) and translates field names in both
  * directions so the trade engine, stores and services keep working unchanged.
  */
-import { DERIV_WS_BASE, GTS_APP_ID } from '@/components/shared/utils/config/config';
+import { DERIV_WS_BASE } from '@/components/shared/utils/config/config';
 import { fetchAccounts, fetchWebSocketUrl, isVirtualAccount, TDerivAccount } from './deriv-rest';
 
 type TMessageCallback = (message: { data: any }) => void;
@@ -25,6 +25,7 @@ type TPending = {
     resolve: (value: any) => void;
     reject: (error: any) => void;
     settled: boolean;
+    timeout: ReturnType<typeof setTimeout>;
 };
 
 const META_KEYS = new Set([
@@ -38,6 +39,18 @@ const META_KEYS = new Set([
     'account',
     'adjust_start_time',
     'start',
+]);
+
+const REMOVED_REQUEST_KEYS = new Set([
+    'loginid',
+    'account',
+    'product_type',
+    'barrier_range',
+    'date_start',
+    'trade_risk_profile',
+    'trading_period_start',
+    'landing_company',
+    'landing_company_short',
 ]);
 
 const MARKET_DISPLAY: Record<string, string> = {
@@ -120,7 +133,7 @@ export class DerivWsAdapter {
     }
 
     private connectPublic() {
-        const url = `${DERIV_WS_BASE}/public?app_id=${encodeURIComponent(GTS_APP_ID)}`;
+        const url = `${DERIV_WS_BASE}/public`;
         this.connect(url).catch(() => {
             /* public data optional; ignore */
         });
@@ -275,14 +288,33 @@ export class DerivWsAdapter {
 
     // --- field translation -------------------------------------------------
 
+    private stripLegacyKeys(obj: Record<string, any>) {
+        REMOVED_REQUEST_KEYS.forEach(key => {
+            delete obj[key];
+        });
+    }
+
+    private normalizeTradeParameters(obj: Record<string, any>) {
+        if (obj.symbol && !obj.underlying_symbol) {
+            obj.underlying_symbol = obj.symbol;
+        }
+        delete obj.symbol;
+        this.stripLegacyKeys(obj);
+    }
+
     private translateRequest(request: Record<string, any>): Record<string, any> {
         const req = { ...request };
-        delete req.loginid;
-        if ('proposal' in req && req.symbol) {
-            req.underlying_symbol = req.symbol;
-            delete req.symbol;
+        this.stripLegacyKeys(req);
+
+        if (req.parameters && typeof req.parameters === 'object') {
+            req.parameters = { ...req.parameters };
+            this.normalizeTradeParameters(req.parameters);
         }
-        if ('balance' in req) delete req.account;
+
+        if ('proposal' in req) {
+            this.normalizeTradeParameters(req);
+        }
+
         return req;
     }
 
@@ -309,6 +341,9 @@ export class DerivWsAdapter {
 
         if (msg.msg_type === 'buy' && msg.buy) {
             coerce(msg.buy, ['buy_price', 'balance_after', 'payout', 'transaction_id', 'contract_id']);
+            if (msg.buy.contract_id != null && msg.buy.transaction_id == null) {
+                msg.buy.transaction_id = msg.buy.contract_id;
+            }
         }
 
         if (msg.msg_type === 'proposal_open_contract' && msg.proposal_open_contract) {
@@ -375,6 +410,7 @@ export class DerivWsAdapter {
 
         if (!target || target.settled) return;
         target.settled = true;
+        clearTimeout(target.timeout);
         this.pending.delete(target.req_id);
 
         if (translated.error) {
@@ -414,6 +450,19 @@ export class DerivWsAdapter {
         const is_subscribe = translated.subscribe === 1;
 
         const promise = new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                const p = this.pending.get(req_id);
+                if (!p || p.settled) return;
+                p.settled = true;
+                this.pending.delete(req_id);
+                reject(
+                    this.buildErrorResponse(
+                        { error: { code: 'Timeout', message: `No response received for ${p.expect}.` } },
+                        request
+                    )
+                );
+            }, is_subscribe ? 30000 : 15000);
+
             this.pending.set(req_id, {
                 req_id,
                 expect: this.expectedMsgType(translated),
@@ -424,6 +473,7 @@ export class DerivWsAdapter {
                 resolve,
                 reject,
                 settled: false,
+                timeout,
             });
         });
 
@@ -435,6 +485,7 @@ export class DerivWsAdapter {
                 const p = this.pending.get(req_id);
                 if (p && !p.settled) {
                     p.settled = true;
+                    clearTimeout(p.timeout);
                     this.pending.delete(req_id);
                     p.reject(
                         this.buildErrorResponse(
@@ -592,6 +643,7 @@ export class DerivWsAdapter {
         this.pending.forEach(p => {
             if (!p.settled) {
                 p.settled = true;
+                clearTimeout(p.timeout);
                 p.reject(
                     this.buildErrorResponse(
                         { error: { code: 'DisconnectError', message: 'Connection closed.' } },

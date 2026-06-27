@@ -57,7 +57,6 @@ export const buildAuthorizeUrl = async (options: { isSignup?: boolean; account?:
     if (options.isSignup) {
         params.set('prompt', 'registration');
         if (DERIV_AFFILIATE.referral_code) params.set('t', DERIV_AFFILIATE.referral_code);
-        if (DERIV_AFFILIATE.id) params.set('affiliate_token', DERIV_AFFILIATE.id);
         params.set('utm_source', DERIV_AFFILIATE.utm_source);
         params.set('utm_medium', DERIV_AFFILIATE.utm_medium);
         params.set('utm_campaign', DERIV_AFFILIATE.utm_campaign);

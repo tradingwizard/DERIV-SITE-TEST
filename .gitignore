@@ -11,6 +11,7 @@ packages/**/scripts/CNAME
 tsconfig.tsbuildinfo
 *.swp
 npm-debug.log
+.npm-cache/
 lerna-debug.log
 coverage
 

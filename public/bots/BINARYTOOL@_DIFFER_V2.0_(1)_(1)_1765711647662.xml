@@ -45,12 +45,12 @@
       </block>
     </statement>
     <statement name="INITIALIZATION">
-      <block type="btnotify" id="jt;f@x^1~ihBheEu@W~`">
+      <block type="notify" id="jt;f@x^1~ihBheEu@W~`">
         <field name="NOTIFICATION_TYPE">success</field>
         <field name="NOTIFICATION_SOUND">silent</field>
         <value name="MESSAGE">
           <shadow type="text" id="),NLrd=b?nXNAU[V!(du">
-            <field name="TEXT">Binarytool</field>
+            <field name="TEXT">GTS Empire</field>
           </shadow>
         </value>
         <next>
@@ -287,7 +287,7 @@
           </block>
         </value>
         <statement name="DO0">
-          <block type="apollo_purchase" id="3gY]+Jgf|.cUv=kM+t=1">
+          <block type="purchase" id="3gY]+Jgf|.cUv=kM+t=1">
             <field name="PURCHASE_LIST">DIGITDIFF</field>
           </block>
         </statement>

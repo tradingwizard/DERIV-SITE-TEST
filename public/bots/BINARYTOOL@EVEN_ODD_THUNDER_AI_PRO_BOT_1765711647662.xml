@@ -47,12 +47,12 @@
       </block>
     </statement>
     <statement name="INITIALIZATION">
-      <block type="btnotify" id="?$O,0W|EIp}F(`|b:f%R">
+      <block type="notify" id="?$O,0W|EIp}F(`|b:f%R">
         <field name="NOTIFICATION_TYPE">success</field>
         <field name="NOTIFICATION_SOUND">silent</field>
         <value name="MESSAGE">
           <shadow type="text" id="=.ePewExSP{tk;?wgJjT">
-            <field name="TEXT">Binarytool</field>
+            <field name="TEXT">GTS Empire</field>
           </shadow>
         </value>
         <next>
@@ -888,7 +888,7 @@
                         <field name="TEXT"></field>
                       </shadow>
                       <block type="text" id="fqxCz%zX?NVy;.:gQ;,f">
-                        <field name="TEXT">🟢Congratulations! Target Profit Achieved!  Join Telegram Channel @ 📍: t.me/TradeGenicGuru</field>
+                        <field name="TEXT">🟢Thunder Parity Pro target profit achieved. GTS Empire automation complete.</field>
                       </block>
                     </value>
                   </block>
@@ -1073,7 +1073,7 @@
                               </shadow>
                             </value>
                             <next>
-                              <block type="apollo_purchase" id="oAQl:ejNB(HRq8bn(bKT">
+                              <block type="purchase" id="oAQl:ejNB(HRq8bn(bKT">
                                 <field name="PURCHASE_LIST">DIGITODD</field>
                               </block>
                             </next>
@@ -1154,7 +1154,7 @@
                                   </shadow>
                                 </value>
                                 <next>
-                                  <block type="apollo_purchase" id="ud![!/ShRO`d$,}0G)W:">
+                                  <block type="purchase" id="ud![!/ShRO`d$,}0G)W:">
                                     <field name="PURCHASE_LIST">DIGITEVEN</field>
                                   </block>
                                 </next>
@@ -1254,7 +1254,7 @@
                               </shadow>
                             </value>
                             <next>
-                              <block type="apollo_purchase" id="=@}#}H-hLeiWkika(2FH">
+                              <block type="purchase" id="=@}#}H-hLeiWkika(2FH">
                                 <field name="PURCHASE_LIST">DIGITEVEN</field>
                               </block>
                             </next>
@@ -1352,7 +1352,7 @@
                               </shadow>
                             </value>
                             <next>
-                              <block type="apollo_purchase" id="p?,^xbykVNMQh+js];)J">
+                              <block type="purchase" id="p?,^xbykVNMQh+js];)J">
                                 <field name="PURCHASE_LIST">DIGITODD</field>
                               </block>
                             </next>

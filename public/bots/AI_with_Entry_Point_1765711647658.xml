@@ -192,7 +192,7 @@
                       
                       <block type="procedures_callnoreturn" id="#2.T|93|7HVyMXV$;JP7">
                         
-                        <mutation xmlns="http://www.w3.org/1999/xhtml" name="Money8GG Assistant"></mutation>
+                        <mutation xmlns="http://www.w3.org/1999/xhtml" name="Empire Vision AI Assistant"></mutation>
                         
                         <data>pL~^49rSFOL-rKmGMIXJ</data>
                         
@@ -864,7 +864,7 @@
   
   <block type="procedures_defnoreturn" id="pL~^49rSFOL-rKmGMIXJ" x="46" y="2365">
     
-    <field name="NAME">Money8GG Assistant</field>
+    <field name="NAME">Empire Vision AI Assistant</field>
     
     <comment pinned="false" h="80" w="160">Describe this function...</comment>
     
@@ -876,7 +876,7 @@
           
           <shadow type="text" id="~9mH)~p26nIJMb^|(nb@">
             
-            <field name="TEXT">Money8gg Free Bots</field>
+            <field name="TEXT">Empire Vision AI loaded</field>
           
           </shadow>
         

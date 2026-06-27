@@ -8,6 +8,15 @@ type TSubscription = {
     subscriber: null | { unsubscribe: () => void };
 };
 
+type TActiveSymbol = {
+    symbol: string;
+    market?: string;
+    submarket?: string;
+    exchange_is_open?: number;
+};
+
+const DEFAULT_CHART_SYMBOLS = ['1HZ100V', 'R_100', '1HZ10V'];
+
 export default class ChartStore {
     root_store: RootStore;
     constructor(root_store: RootStore) {
@@ -65,14 +74,29 @@ export default class ChartStore {
         // main_content.setActiveTab(tabs_title.WORKSPACE);
     };
 
-    updateSymbol = () => {
-        const workspace = window.Blockly.derivWorkspace;
+    getValidChartSymbol = (preferred_symbol?: string) => {
+        const active_symbols = (api_base?.active_symbols ?? []) as TActiveSymbol[];
+        const has_active_symbols = active_symbols.length > 0;
+        const isValid = (symbol?: string) =>
+            !!symbol && (!has_active_symbols || active_symbols.some(active_symbol => active_symbol.symbol === symbol));
+
+        const workspace = window.Blockly?.derivWorkspace;
         const market_block = workspace?.getAllBlocks().find((block: window.Blockly.Block) => {
             return block.type === 'trade_definition_market';
         });
+        const block_symbol = market_block?.getFieldValue('SYMBOL_LIST');
 
-        const symbol = market_block?.getFieldValue('SYMBOL_LIST') ?? api_base?.active_symbols[0]?.symbol;
-        this.symbol = symbol;
+        if (isValid(block_symbol)) return block_symbol;
+        if (isValid(preferred_symbol)) return preferred_symbol;
+
+        const default_symbol = DEFAULT_CHART_SYMBOLS.find(isValid);
+        if (default_symbol) return default_symbol;
+
+        return active_symbols[0]?.symbol ?? DEFAULT_CHART_SYMBOLS[0];
+    };
+
+    updateSymbol = (preferred_symbol = this.symbol) => {
+        this.symbol = this.getValidChartSymbol(preferred_symbol);
     };
 
     onSymbolChange = (symbol: string) => {

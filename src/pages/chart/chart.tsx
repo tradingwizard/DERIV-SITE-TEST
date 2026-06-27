@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
+import { api_base } from '@/external/bot-skeleton';
 import chart_api from '@/external/bot-skeleton/services/api/chart-api';
 import { useStore } from '@/hooks/useStore';
 import {
@@ -29,6 +30,45 @@ type TError = null | {
 };
 
 const subscriptions: TSubscription = {};
+
+const getErrorMessage = (error: unknown) =>
+    (error as TError)?.error?.message || (error as Error)?.message || 'Chart data is currently unavailable.';
+
+const getErrorCode = (error: unknown) => (error as TError)?.error?.code || 'ChartDataError';
+
+const getRequestMessageType = (req: Record<string, unknown>) => {
+    if (req.ticks_history) return req.style === 'candles' ? 'candles' : 'history';
+    return Object.keys(req).find(key => key !== 'req_id' && key !== 'passthrough') ?? 'chart';
+};
+
+const createChartErrorResponse = (req: Record<string, unknown>, error: unknown) => ({
+    echo_req: req,
+    msg_type: getRequestMessageType(req),
+    error: {
+        code: getErrorCode(error),
+        message: getErrorMessage(error),
+        echo_req: req,
+    },
+});
+
+const getStreamId = (data?: Record<string, any>) => data?.subscription?.id || data?.tick?.id || data?.ohlc?.id || '';
+
+const isChartStreamResponse = (
+    data: Record<string, any>,
+    req: TicksStreamRequest,
+    current_subscription_id: string
+) => {
+    if (!['tick', 'ohlc'].includes(data?.msg_type)) return false;
+
+    const stream_id = getStreamId(data);
+    if (current_subscription_id && stream_id && stream_id !== current_subscription_id) return false;
+
+    const echo_req = data?.echo_req ?? {};
+    const echo_symbol = echo_req.ticks_history || echo_req.ticks || data?.tick?.symbol || data?.ohlc?.symbol;
+    if (echo_symbol && echo_symbol !== req.ticks_history) return false;
+
+    return true;
+};
 
 const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) => {
     const barriers: [] = [];
@@ -61,20 +101,6 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         position: ui.is_chart_layout_default ? 'bottom' : 'left',
         theme: ui.is_dark_mode_on ? 'dark' : 'light',
     };
-    console.log({
-        chart_type,
-        getMarketsOrder,
-        granularity,
-        onSymbolChange,
-        setChartStatus,
-        symbol,
-        updateChartType,
-        updateGranularity,
-        updateSymbol,
-        setChartSubscriptionId,
-        chart_subscription_id,
-    });
-
     useEffect(() => {
         // Safari browser detection
         const isSafariBrowser = () => {
@@ -85,7 +111,11 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         setIsSafari(isSafariBrowser());
 
         return () => {
-            chart_api.api.forgetAll('ticks');
+            Object.keys(subscriptions).forEach(subscription_id => {
+                subscriptions[subscription_id]?.unsubscribe?.();
+                delete subscriptions[subscription_id];
+            });
+            chart_api.api?.forgetAll?.('ticks')?.catch?.(() => {});
         };
     }, []);
 
@@ -94,33 +124,48 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     }, [chart_subscription_id]);
 
     useEffect(() => {
-        if (!symbol) updateSymbol();
-    }, [symbol, updateSymbol]);
+        updateSymbol(symbol);
+        api_base.active_symbols_promise?.then(() => updateSymbol(symbol));
+        // We only want to validate the stored/default symbol when the chart mounts.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
-        return chart_api.api.send(req);
+    const requestAPI = async (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
+        try {
+            return await chart_api.send(req);
+        } catch (error) {
+            return createChartErrorResponse(req as Record<string, unknown>, error);
+        }
     };
-    const requestForgetStream = (subscription_id: string) => {
-        subscription_id && chart_api.api.forget(subscription_id);
+    const requestForgetStream = async (subscription_id: string) => {
+        if (!subscription_id) return;
+        subscriptions[subscription_id]?.unsubscribe?.();
+        delete subscriptions[subscription_id];
+        chartSubscriptionIdRef.current = '';
+        setChartSubscriptionId('');
+        await chart_api.api?.forget?.(subscription_id)?.catch?.(() => {});
     };
 
     const requestSubscribe = async (req: TicksStreamRequest, callback: (data: any) => void) => {
         try {
-            requestForgetStream(chartSubscriptionIdRef.current);
-            const history = await chart_api.api.send(req);
-            setChartSubscriptionId(history?.subscription.id);
+            await requestForgetStream(chartSubscriptionIdRef.current);
+            const history = await chart_api.send(req);
+            const subscription_id = getStreamId(history);
+            chartSubscriptionIdRef.current = subscription_id;
+            setChartSubscriptionId(subscription_id);
             if (history) callback(history);
-            if (req.subscribe === 1) {
-                subscriptions[history?.subscription.id] = chart_api.api
-                    .onMessage()
+
+            if (req.subscribe === 1 && subscription_id) {
+                subscriptions[subscription_id] = chart_api.api
+                    ?.onMessage()
                     ?.subscribe(({ data }: { data: TicksHistoryResponse }) => {
+                        if (!isChartStreamResponse(data, req, chartSubscriptionIdRef.current)) return;
                         callback(data);
                     });
             }
-        } catch (e) {
-            // eslint-disable-next-line no-console
-            (e as TError)?.error?.code === 'MarketIsClosed' && callback([]); //if market is closed sending a empty array  to resolve
-            console.log((e as TError)?.error?.message);
+        } catch (error) {
+            callback(createChartErrorResponse(req as Record<string, unknown>, error));
+            setChartStatus(false);
         }
     };
 

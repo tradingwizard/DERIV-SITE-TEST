@@ -239,9 +239,7 @@
                 </value>
               </block>
             </value>
-            <statement name="DO0">
-              <block type="set_tp" id="Xjy,yax%WJ?/xFa4r~P5"></block>
-            </statement>
+            <statement name="DO0"></statement>
             <value name="IF1">
               <block type="logic_compare" id="~:*,_~VY0B)]0=UCOTzt">
                 <field name="OP">LTE</field>
@@ -263,9 +261,7 @@
                 </value>
               </block>
             </value>
-            <statement name="DO1">
-              <block type="set_sl" id="B|ICDIfcaOc9Z^3~YLF1"></block>
-            </statement>
+            <statement name="DO1"></statement>
             <statement name="ELSE">
               <block type="trade_again" id="s.M0BL}NDrgOvAoo^Nm$"></block>
             </statement>
@@ -301,7 +297,7 @@
               </block>
             </value>
             <statement name="DO0">
-              <block type="apollo_purchase" id="GDnqv$.FzwC(0IHe0]I/">
+              <block type="purchase" id="GDnqv$.FzwC(0IHe0]I/">
                 <field name="PURCHASE_LIST">ACCU</field>
               </block>
             </statement>

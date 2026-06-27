@@ -58,7 +58,7 @@
       <block type="text_print" id=")J1(pHFl]elGq*pgN)0Q">
         <value name="TEXT">
           <shadow type="text" id="9fO$}GCCGs/RoRg-ta2,">
-            <field name="TEXT">WELCOME TO DERIV KILLER AI ROBOT</field>
+            <field name="TEXT">Welcome to Crimson Flip AI</field>
           </shadow>
         </value>
         <next>
@@ -114,7 +114,7 @@
                                             <field name="TEXT"></field>
                                           </shadow>
                                           <block type="text" id="OJ1~E$Q]JqZX#A`PUOTy">
-                                            <field name="TEXT">ENHANCED BINARY FLIPPER PLUS  🇬🇧 AI PREMIUM 🤖 [By: DERIV-KILLER: +254-701-655-662] •Expected Profit-&gt; $ 10 (adjustable) | Stop Loss $ 10 ( adjustable)</field>
+                                            <field name="TEXT">Crimson Flip AI - GTS Empire automation. Expected profit and stop loss are adjustable.</field>
                                           </block>
                                         </value>
                                         <next>
@@ -739,7 +739,7 @@
                                     <field name="TEXT"></field>
                                   </shadow>
                                   <block type="text" id="|0r,rn%dpAV#vkAZ*SaE" collapsed="true">
-                                    <field name="TEXT">DERIV KILLER AI ROBOT</field>
+                                    <field name="TEXT">Crimson Flip AI</field>
                                   </block>
                                 </value>
                                 <next>
@@ -895,7 +895,7 @@
         <field name="NOTIFICATION_SOUND">silent</field>
         <value name="MESSAGE">
           <shadow type="text" id="p:@2jG@*l;;PUpZqp$,W">
-            <field name="TEXT">DERIV KILLER AI ROBOT</field>
+            <field name="TEXT">Crimson Flip AI</field>
           </shadow>
         </value>
         <next>
@@ -929,7 +929,7 @@
                 <field name="NOTIFICATION_SOUND">silent</field>
                 <value name="MESSAGE">
                   <shadow type="text" id="k{MLW;$@WCrXYj$oy,MT">
-                    <field name="TEXT">[Optimus Binary Traders]</field>
+                    <field name="TEXT">GTS Empire</field>
                   </shadow>
                   <block type="variables_get" id="f_N{nx1:@)3~!~NegrS-">
                     <field name="VAR" id="4O9mZ/E2g%(dkk{3^HQ3">text1</field>

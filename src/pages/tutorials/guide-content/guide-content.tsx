@@ -130,7 +130,7 @@ const GuideContent = ({ guide_tab_content, video_tab_content, is_dialog_open }: 
                                     lineHeight='s'
                                     size={isDesktop ? 's' : 'xs'}
                                 >
-                                    <Localize i18n_default_text='Videos on GTS Empire' />
+                                    <Localize i18n_default_text='Videos on Deriv' />
                                 </Text>
                             </div>
 

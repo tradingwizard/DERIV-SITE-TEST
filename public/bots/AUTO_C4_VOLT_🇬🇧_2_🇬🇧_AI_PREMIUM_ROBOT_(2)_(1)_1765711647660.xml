@@ -67,7 +67,7 @@
                 <field name="TYPE">TEXT</field>
                 <value name="TEXT">
                   <shadow type="text" id="h5X+*[5.x]gKZss%`=U@">
-                    <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM ROBOT, Here we make trading easier for beginners and professional traders :let's green together 💯</field>
+                    <field name="TEXT">Empire Voltage Premium</field>
                   </shadow>
                 </value>
               </block>
@@ -125,7 +125,7 @@
                                                 <field name="TEXT"></field>
                                               </shadow>
                                               <block type="text" id="$VOS)}.7R`WBQBNqAq(9">
-                                                <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM ROBOT </field>
+                                                <field name="TEXT">Empire Voltage Premium</field>
                                               </block>
                                             </value>
                                             <next>
@@ -548,7 +548,7 @@
                                         <field name="TEXT"></field>
                                       </shadow>
                                       <block type="text" id="(LP$c}ve{Pn=,0BGYH_o">
-                                        <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM ROBOT </field>
+                                        <field name="TEXT">Empire Voltage Premium</field>
                                       </block>
                                     </value>
                                   </block>
@@ -575,7 +575,7 @@
                                             <field name="TEXT"></field>
                                           </shadow>
                                           <block type="text" id="kTcU1cRv8-6AgPPP0d%0">
-                                            <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM ROBOT </field>
+                                            <field name="TEXT">Empire Voltage Premium</field>
                                           </block>
                                         </value>
                                         <next>
@@ -738,7 +738,7 @@
                                         <field name="TEXT"></field>
                                       </shadow>
                                       <block type="text" id="!AR}MkUgBB=bj:8R!LUW">
-                                        <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM ROBOT •Profit Achieved!!! $</field>
+                                        <field name="TEXT">Empire Voltage Premium profit target reached: $</field>
                                       </block>
                                     </value>
                                     <next>
@@ -872,7 +872,7 @@
         <field name="NOTIFICATION_SOUND">silent</field>
         <value name="MESSAGE">
           <shadow type="text" id="DaM.fu~dZ;s(1SUTx..5">
-            <field name="TEXT">AUTO C4 VOLT 🇬🇧 2 🇬🇧 AI PREMIUM </field>
+            <field name="TEXT">Empire Voltage Premium</field>
           </shadow>
         </value>
         <next>
@@ -906,7 +906,7 @@
                 <field name="NOTIFICATION_SOUND">silent</field>
                 <value name="MESSAGE">
                   <shadow type="text" id="Z9S]%SP:2diGc=)}yNyJ">
-                    <field name="TEXT">[Optimus Binary Traders]</field>
+                    <field name="TEXT">GTS Empire</field>
                   </shadow>
                   <block type="variables_get" id="/3YiQLc|`iFCGmMh({ON">
                     <field name="VAR" id="Zt/nZw_0OO7A|Rkc):wH" variabletype="">text1</field>

@@ -21,6 +21,7 @@ import { BrandDerivLogoCoralIcon } from '@deriv/quill-icons/Logo';
 import { useTranslations } from '@deriv-com/translations';
 import { ToggleSwitch } from '@deriv-com/ui';
 import { URLConstants } from '@deriv-com/utils';
+import { GTS_WHATSAPP_URL } from '../../contact-links';
 
 export type TSubmenuSection = 'accountSettings' | 'cashier' | 'reports';
 
@@ -146,7 +147,7 @@ const useMobileMenuConfig = (client?: RootStore['client']) => {
                 cs_chat_whatsapp
                     ? {
                           as: 'a',
-                          href: URLConstants.whatsApp,
+                          href: GTS_WHATSAPP_URL,
                           label: localize('WhatsApp'),
                           LeftComponent: LegacyWhatsappIcon,
                           target: '_blank',

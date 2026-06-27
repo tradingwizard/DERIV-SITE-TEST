@@ -51,7 +51,7 @@
               <block type="text_print" id="Ob:;_Qm9V?3)T6]sKg{p" collapsed="true">
                 <value name="TEXT">
                   <shadow type="text" id="1qgFKu#J$h+V!nMtb9SU">
-                    <field name="TEXT">TAKE PROFIT HIT @BINARYTOOL</field>
+                    <field name="TEXT">Empire Wizard AI take profit hit</field>
                   </shadow>
                 </value>
               </block>
@@ -260,12 +260,12 @@
       </block>
     </statement>
     <statement name="INITIALIZATION">
-      <block type="btnotify" id="{~1mk7~{_9oYH^1~/%w!">
+      <block type="notify" id="{~1mk7~{_9oYH^1~/%w!">
         <field name="NOTIFICATION_TYPE">success</field>
         <field name="NOTIFICATION_SOUND">silent</field>
         <value name="MESSAGE">
           <shadow type="text" id="*ZYteeR?+K8xEcCEe%y1">
-            <field name="TEXT">Binarytool</field>
+            <field name="TEXT">GTS Empire</field>
           </shadow>
         </value>
         <next>
@@ -333,12 +333,12 @@
                                           </block>
                                         </value>
                                         <next>
-                                          <block type="btnotify" id="Q.fbzOXYs+w}9#IQMazm" collapsed="true">
+                                          <block type="notify" id="Q.fbzOXYs+w}9#IQMazm" collapsed="true">
                                             <field name="NOTIFICATION_TYPE">success</field>
                                             <field name="NOTIFICATION_SOUND">silent</field>
                                             <value name="MESSAGE">
                                               <shadow type="text" id="tl)QdeV}D{b]jc2X}iVP">
-                                                <field name="TEXT">BINARYTOOL WIZARD AUTO DIGITS AI</field>
+                                                <field name="TEXT">Empire Wizard AI</field>
                                               </shadow>
                                             </value>
                                           </block>
@@ -932,7 +932,7 @@
                                                                     <field name="NOTIFICATION_SOUND">silent</field>
                                                                     <value name="MESSAGE">
                                                                       <shadow type="text" id="P~:yj;Qt~$T7%Bii7(?J">
-                                                                        <field name="TEXT">app.binarytool.site</field>
+                                                                        <field name="TEXT">GTS Empire</field>
                                                                       </shadow>
                                                                     </value>
                                                                     <next>
@@ -1217,7 +1217,7 @@
           </block>
         </value>
         <next>
-          <block type="apollo_purchase" id="#0@F9S0C95TM3l._g}5~">
+          <block type="purchase" id="#0@F9S0C95TM3l._g}5~">
             <field name="PURCHASE_LIST">DIGITUNDER</field>
           </block>
         </next>
