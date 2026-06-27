@@ -75,43 +75,55 @@ window.Blockly.Blocks.trade_definition_market = {
         const market_dropdown = this.getField('MARKET_LIST');
         const submarket_dropdown = this.getField('SUBMARKET_LIST');
         const symbol_dropdown = this.getField('SYMBOL_LIST');
-        const market = market_dropdown.getValue();
-        const submarket = submarket_dropdown.getValue();
-        const symbol = symbol_dropdown.getValue();
-
         const market_options = active_symbols.getMarketDropdownOptions();
 
-        const populateMarketDropdown = () => {
-            const safe_market = getSafeDropdownValue(market_options, market);
+        const refreshMarketDropdowns = () => {
+            const safe_market = getSafeDropdownValue(market_options, market_dropdown.getValue());
             market_dropdown?.updateOptions(market_options, {
                 default_value: safe_market,
                 should_pretend_empty: true,
                 event_group: event.group,
             });
+
+            const submarket_options = active_symbols.getSubmarketDropdownOptions(safe_market);
+            const safe_submarket = getSafeDropdownValue(submarket_options, submarket_dropdown.getValue());
+            submarket_dropdown?.updateOptions(submarket_options, {
+                default_value: safe_submarket,
+                should_pretend_empty: true,
+                event_group: event.group,
+            });
+
+            const symbol_options = active_symbols.getSymbolDropdownOptions(safe_submarket);
+            const safe_symbol = getSafeDropdownValue(symbol_options, symbol_dropdown.getValue());
+            symbol_dropdown?.updateOptions(symbol_options, {
+                default_value: safe_symbol,
+                should_pretend_empty: true,
+                event_group: event.group,
+            });
+
+            if (safe_symbol && safe_symbol !== 'na') {
+                DBotStore.instance.dashboard.setBotBuilderSymbol(safe_symbol);
+            }
         };
 
         if (event.type === window.Blockly.Events.BLOCK_CREATE && event.ids.includes(this.id)) {
-            populateMarketDropdown();
+            refreshMarketDropdowns();
         } else if (event.type === window.Blockly.Events.BLOCK_CHANGE && event.blockId === this.id) {
             if (event.name === 'MARKET_LIST') {
-                const safe_market = getSafeDropdownValue(market_options, market);
-                const submarket_options = active_symbols.getSubmarketDropdownOptions(safe_market);
-                const safe_submarket = getSafeDropdownValue(submarket_options, submarket);
-                submarket_dropdown.updateOptions(submarket_options, {
-                    default_value: safe_submarket,
-                    should_pretend_empty: true,
-                    event_group: event.group,
-                });
+                refreshMarketDropdowns();
             } else if (event.name === 'SUBMARKET_LIST') {
-                const submarket_options = active_symbols.getSubmarketDropdownOptions(market);
-                const safe_submarket = getSafeDropdownValue(submarket_options, submarket);
+                const submarket_options = active_symbols.getSubmarketDropdownOptions(market_dropdown.getValue());
+                const safe_submarket = getSafeDropdownValue(submarket_options, submarket_dropdown.getValue());
                 const symbol_options = active_symbols.getSymbolDropdownOptions(safe_submarket);
-                const safe_symbol = getSafeDropdownValue(symbol_options, symbol);
+                const safe_symbol = getSafeDropdownValue(symbol_options, symbol_dropdown.getValue());
                 symbol_dropdown.updateOptions(symbol_options, {
                     default_value: safe_symbol,
                     should_pretend_empty: true,
                     event_group: event.group,
                 });
+                if (safe_symbol && safe_symbol !== 'na') {
+                    DBotStore.instance.dashboard.setBotBuilderSymbol(safe_symbol);
+                }
             } else if (event.name === 'SYMBOL_LIST') {
                 const new_symbol = symbol_dropdown.getValue();
                 DBotStore.instance.dashboard.setBotBuilderSymbol(new_symbol);
@@ -122,7 +134,7 @@ window.Blockly.Blocks.trade_definition_market = {
             event.blockId === this.getRootBlock().id
         ) {
             if (market_dropdown.isEmpty() || submarket_dropdown.isEmpty() || symbol_dropdown.isEmpty()) {
-                populateMarketDropdown();
+                refreshMarketDropdowns();
             }
         }
     },

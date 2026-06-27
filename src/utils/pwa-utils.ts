@@ -51,6 +51,22 @@ class PWAManager {
             return null;
         }
 
+        // GTS Empire must always load the latest trading Builder bundle. A
+        // stale service worker can keep old dropdown/contract metadata code
+        // alive after deploys, so clear it instead of registering offline cache.
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(registration => registration.unregister()));
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(key => caches.delete(key)));
+            }
+        } catch (error) {
+            console.warn('[PWA] Service worker cleanup failed:', error);
+        }
+
+        return null;
+
         // Only enable PWA service workers on Chrome browsers
         const isChrome = /Chrome/.test(navigator.userAgent) && !isFirefox() && !isSafari();
         if (!isChrome) {

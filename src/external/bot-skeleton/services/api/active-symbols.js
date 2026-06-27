@@ -43,25 +43,46 @@ const FALLBACK_SUBMARKET_OPTIONS = {
     ],
 };
 
+const normalizeLookupKey = value =>
+    `${value || ''}`
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
 const normalizeSubmarket = submarket => {
     const aliases = {
+        random_index: 'random_index',
+        random: 'random_index',
         continuous_index: 'random_index',
         continuous_indices: 'random_index',
+        volatility: 'random_index',
         volatility_index: 'random_index',
         volatility_indices: 'random_index',
+        crash_index: 'crash_index',
+        crash_indices: 'crash_index',
         crashboom: 'crash_index',
         crash_boom: 'crash_index',
         crash_boom_index: 'crash_index',
         crash_boom_indices: 'crash_index',
+        boom_crash: 'crash_index',
+        boom_crash_index: 'crash_index',
+        boom_crash_indices: 'crash_index',
+        random_daily: 'random_daily',
         daily_reset_index: 'random_daily',
         daily_reset_indices: 'random_daily',
+        jump_index: 'jump_index',
         jump_indices: 'jump_index',
+        step_index: 'step_index',
         step_indices: 'step_index',
+        commodity_basket: 'commodity_basket',
         commodities_basket: 'commodity_basket',
         basket_commodities: 'commodity_basket',
     };
 
-    return aliases[submarket] || submarket;
+    const normalized_key = normalizeLookupKey(submarket);
+    return aliases[normalized_key] || submarket;
 };
 
 const getSubmarketDisplayName = submarket =>
@@ -140,9 +161,12 @@ export default class ActiveSymbols {
                 return processed_symbols;
             }
 
+            const normalized_submarket = normalizeSubmarket(
+                symbol.submarket || symbol.subgroup || symbol.underlying_symbol_type || symbol.symbol_type
+            );
             const normalized_symbol = {
                 ...symbol,
-                submarket: normalizeSubmarket(symbol.submarket),
+                submarket: normalized_submarket,
             };
             const isExistingValue = (object, prop) =>
                 Object.keys(object).findIndex(a => a === normalized_symbol[prop]) !== -1;

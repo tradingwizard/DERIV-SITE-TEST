@@ -38,23 +38,35 @@
             }
         </style>
         <script>
-            (function clearPreviewServiceWorker() {
-                if (!('serviceWorker' in navigator)) return;
-                if (sessionStorage.getItem('gts-sw-cleared') === 'true') return;
+            (function clearStaleGtsBuild() {
+                const buildId = 'derived-builder-compat-20260628-v2';
+                window.__GTS_BUILD_ID = buildId;
+                const storageKey = 'gts-build-id';
+                const previousBuildId = localStorage.getItem(storageKey);
+                if (previousBuildId === buildId) return;
 
-                const controlled = Boolean(navigator.serviceWorker.controller);
-                Promise.all([
-                    navigator.serviceWorker.getRegistrations().then(registrations =>
-                        Promise.all(registrations.map(registration => registration.unregister()))
-                    ),
-                    'caches' in window ? caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))) : Promise.resolve(),
-                ])
+                const controlled = Boolean(navigator.serviceWorker && navigator.serviceWorker.controller);
+                const clearServiceWorkers =
+                    'serviceWorker' in navigator
+                        ? navigator.serviceWorker
+                              .getRegistrations()
+                              .then(registrations =>
+                                  Promise.all(registrations.map(registration => registration.unregister()))
+                              )
+                        : Promise.resolve();
+                const clearCaches =
+                    'caches' in window
+                        ? caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
+                        : Promise.resolve();
+
+                Promise.all([clearServiceWorkers, clearCaches])
                     .then(() => {
-                        sessionStorage.setItem('gts-sw-cleared', 'true');
+                        localStorage.setItem(storageKey, buildId);
                         if (controlled) window.location.reload();
                     })
                     .catch(error => {
                         console.warn('[GTS] Service worker cleanup failed:', error);
+                        localStorage.setItem(storageKey, buildId);
                     });
             })();
         </script>

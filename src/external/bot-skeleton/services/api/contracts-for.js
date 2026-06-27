@@ -186,12 +186,19 @@ export default class ContractsFor {
         const contracts = await this.getContractsFor(symbol);
         const contract_category = this.getContractCategoryByTradeType(trade_type);
         const barrier_category = this.getBarrierCategoryByTradeType(trade_type);
+        const { opposites } = config();
+        const contract_types_for_trade_type = (opposites[`${trade_type || ''}`.toUpperCase()] || []).map(type =>
+            Object.keys(type)[0]
+        );
 
         return contracts.filter(contract => {
+            const contract_category_value = contract.contract_category || contract.trade_type_category;
             const has_matching_category =
-                contract.contract_category === contract_category ||
+                contract_category_value === contract_category ||
+                contract.trade_type_category === contract_category ||
                 (contract_category === 'digits' &&
-                    ['matchesdiffers', 'evenodd', 'overunder'].includes(contract.contract_category));
+                    ['matchesdiffers', 'evenodd', 'overunder', 'digits'].includes(contract_category_value)) ||
+                contract_types_for_trade_type.includes(contract.contract_type);
             const has_matching_barrier =
                 !contract.barrier_category || !barrier_category || contract.barrier_category === barrier_category;
 

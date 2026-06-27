@@ -79,23 +79,41 @@ const SUBMARKET_DISPLAY: Record<string, string> = {
 };
 
 const SUBMARKET_ALIASES: Record<string, string> = {
+    random_index: 'random_index',
+    random: 'random_index',
     continuous_index: 'random_index',
     continuous_indices: 'random_index',
+    volatility: 'random_index',
     volatility_index: 'random_index',
     volatility_indices: 'random_index',
+    crash_index: 'crash_index',
+    crash_indices: 'crash_index',
     crashboom: 'crash_index',
     crash_boom: 'crash_index',
     crash_boom_index: 'crash_index',
     crash_boom_indices: 'crash_index',
     boom_crash: 'crash_index',
     boom_crash_index: 'crash_index',
+    boom_crash_indices: 'crash_index',
+    random_daily: 'random_daily',
     daily_reset_index: 'random_daily',
     daily_reset_indices: 'random_daily',
+    jump_index: 'jump_index',
     jump_indices: 'jump_index',
+    step_index: 'step_index',
     step_indices: 'step_index',
+    commodity_basket: 'commodity_basket',
     commodities_basket: 'commodity_basket',
     basket_commodities: 'commodity_basket',
 };
+
+const normalizeLookupKey = (value?: string): string =>
+    `${value || ''}`
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
 
 const humanize = (key?: string): string => {
     if (!key) return '';
@@ -135,7 +153,7 @@ const normalizeMarket = (market?: string): string | undefined => {
 
 const normalizeSubmarket = (submarket?: string): string | undefined => {
     if (!submarket) return submarket;
-    return SUBMARKET_ALIASES[submarket] ?? submarket;
+    return SUBMARKET_ALIASES[normalizeLookupKey(submarket)] ?? submarket;
 };
 
 const normalizeContractRow = (contract: Record<string, any>): Record<string, any> => {
@@ -155,9 +173,13 @@ const normalizeContractRow = (contract: Record<string, any>): Record<string, any
     if (DIGIT_CONTRACT_TYPES.has(c.contract_type) && (!c.barrier_category || c.barrier_category === 'digit')) {
         c.barrier_category = 'non_financial';
     }
+    if (!c.contract_category && DIGIT_CONTRACT_TYPES.has(c.contract_type)) {
+        if (['DIGITMATCH', 'DIGITDIFF'].includes(c.contract_type)) c.contract_category = 'matchesdiffers';
+        if (['DIGITEVEN', 'DIGITODD'].includes(c.contract_type)) c.contract_category = 'evenodd';
+        if (['DIGITOVER', 'DIGITUNDER'].includes(c.contract_type)) c.contract_category = 'overunder';
+    }
     if (DIGIT_CONTRACT_CATEGORIES.has(c.contract_category)) {
-        c.trade_type_category = c.contract_category;
-        c.contract_category = 'digits';
+        c.trade_type_category = 'digits';
     }
 
     return c;
