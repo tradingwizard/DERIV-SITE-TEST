@@ -82,6 +82,31 @@ const coerce = (obj: Record<string, any>, keys: string[]) => {
     });
 };
 
+const DIGIT_CONTRACT_CATEGORIES = new Set(['matchesdiffers', 'evenodd', 'overunder']);
+const DIGIT_CONTRACT_TYPES = new Set(['DIGITMATCH', 'DIGITDIFF', 'DIGITEVEN', 'DIGITODD', 'DIGITOVER', 'DIGITUNDER']);
+
+const normalizeContractRow = (contract: Record<string, any>): Record<string, any> => {
+    const c = { ...contract };
+
+    if (c.underlying_symbol && !c.symbol) c.symbol = c.underlying_symbol;
+    if (c.min_duration && !c.min_contract_duration) c.min_contract_duration = c.min_duration;
+    if (c.max_duration && !c.max_contract_duration) c.max_contract_duration = c.max_duration;
+    if (c.min_contract_duration && typeof c.min_contract_duration === 'number') c.min_contract_duration = `${c.min_contract_duration}s`;
+    if (c.max_contract_duration && typeof c.max_contract_duration === 'number') c.max_contract_duration = `${c.max_contract_duration}s`;
+    if (!c.expiry_type && c.min_contract_duration) {
+        c.expiry_type = `${c.min_contract_duration}`.endsWith('t') ? 'tick' : 'intraday';
+    }
+    if (DIGIT_CONTRACT_TYPES.has(c.contract_type) && (!c.barrier_category || c.barrier_category === 'digit')) {
+        c.barrier_category = 'non_financial';
+    }
+    if (DIGIT_CONTRACT_CATEGORIES.has(c.contract_category)) {
+        c.trade_type_category = c.contract_category;
+        c.contract_category = 'digits';
+    }
+
+    return c;
+};
+
 class ConnectionFacade {
     listeners: Record<string, Set<() => void>> = {};
     private getWs: () => WebSocket | null;
@@ -315,6 +340,11 @@ export class DerivWsAdapter {
             this.normalizeTradeParameters(req);
         }
 
+        if (typeof req.contracts_for === 'string') {
+            req.underlying_symbol = req.contracts_for;
+            req.contracts_for = 1;
+        }
+
         return req;
     }
 
@@ -333,6 +363,13 @@ export class DerivWsAdapter {
                 if (!s.submarket_display_name) s.submarket_display_name = humanize(s.submarket);
                 return s;
             });
+        }
+
+        if (msg.msg_type === 'contracts_for' && Array.isArray(msg.contracts_for?.available)) {
+            msg.contracts_for = {
+                ...msg.contracts_for,
+                available: msg.contracts_for.available.map(normalizeContractRow),
+            };
         }
 
         if (msg.msg_type === 'proposal' && msg.proposal) {

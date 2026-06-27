@@ -178,7 +178,9 @@ export default class ContractsFor {
         const barrier_category = this.getBarrierCategoryByTradeType(trade_type);
 
         return contracts.filter(contract => {
-            const has_matching_category = contract.contract_category === contract_category;
+            const has_matching_category =
+                contract.contract_category === contract_category ||
+                (contract_category === 'digits' && ['matchesdiffers', 'evenodd', 'overunder'].includes(contract.contract_category));
             const has_matching_barrier = contract.barrier_category === barrier_category;
 
             return has_matching_category && has_matching_barrier;
