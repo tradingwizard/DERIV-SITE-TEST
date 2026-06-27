@@ -4,7 +4,8 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
 [[redirects]]
   from = "/api/*"
@@ -16,4 +17,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
