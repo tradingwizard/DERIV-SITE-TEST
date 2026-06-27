@@ -181,7 +181,8 @@ export default class ContractsFor {
             const has_matching_category =
                 contract.contract_category === contract_category ||
                 (contract_category === 'digits' && ['matchesdiffers', 'evenodd', 'overunder'].includes(contract.contract_category));
-            const has_matching_barrier = contract.barrier_category === barrier_category;
+            const has_matching_barrier =
+                !contract.barrier_category || !barrier_category || contract.barrier_category === barrier_category;
 
             return has_matching_category && has_matching_barrier;
         });
@@ -316,7 +317,13 @@ export default class ContractsFor {
         }
 
         if (durations.length === 0) {
-            return NOT_AVAILABLE_DURATIONS;
+            return contracts_for_category.length > 0
+                ? [
+                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][1], min: 1, max: 10 },
+                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][1], min: 1, max: 59 },
+                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][1], min: 1, max: 60 },
+                  ]
+                : NOT_AVAILABLE_DURATIONS;
         }
 
         // Maintain order based on duration unit
@@ -439,6 +446,7 @@ export default class ContractsFor {
 
                 if (!is_disabled && has_durations) {
                     const types = opposites[trade_type.toUpperCase()];
+                    if (!types) continue;
                     const icons = [];
                     const names = [];
 
@@ -607,6 +615,7 @@ export default class ContractsFor {
 
                 if (!is_disabled && has_durations) {
                     const types = opposites[trade_type.toUpperCase()];
+                    if (!types) continue;
                     // e.g. [['Rise/Fall', 'callput']]
                     trade_types.push([types.map(type => type[Object.keys(type)[0]]).join('/'), trade_type]);
                 }
@@ -632,7 +641,7 @@ export default class ContractsFor {
         if (trade_type_value === 'ACCU') {
             trade_type_value = 'accumulator';
         }
-        const categories = opposites[trade_type_value.toUpperCase()].map(opposite => ({
+        const categories = (opposites[trade_type_value.toUpperCase()] || []).map(opposite => ({
             value: Object.keys(opposite)[0],
             text: Object.values(opposite)[0],
         }));

@@ -12,6 +12,16 @@ import { loadBlockly } from './blockly';
 import DBotStore from './dbot-store';
 import { isAllRequiredBlocksEnabled, updateDisabledBlocks, validateErrorOnBlockDelete } from './utils';
 
+const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
+
+const getSafeDropdownValue = (options, current_value) => {
+    if (options.some(option => isValidDropdownOption(option) && option[1] === current_value)) {
+        return current_value;
+    }
+
+    return options.find(isValidDropdownOption)?.[1] || options[0]?.[1] || '';
+};
+
 class DBot {
     constructor() {
         this.interpreter = null;
@@ -61,10 +71,22 @@ class DBot {
                         contracts_for?.getTradeTypeCategories?.(market, submarket, symbol).then(categories => {
                             const category_field = this.getField('TRADETYPECAT_LIST');
                             if (category_field) {
+                                const safe_category = getSafeDropdownValue(categories, category);
                                 category_field.updateOptions(categories, {
-                                    default_value: category,
+                                    default_value: safe_category,
                                     should_pretend_empty: true,
                                     event_group: event.group,
+                                });
+
+                                contracts_for?.getTradeTypes?.(market, submarket, symbol, safe_category).then(trade_types => {
+                                    const trade_type_field = this.getField('TRADETYPE_LIST');
+                                    if (trade_type_field) {
+                                        trade_type_field.updateOptions(trade_types, {
+                                            default_value: getSafeDropdownValue(trade_types, trade_type),
+                                            should_pretend_empty: true,
+                                            event_group: event.group,
+                                        });
+                                    }
                                 });
                             }
                         });
@@ -86,7 +108,7 @@ class DBot {
                         contracts_for?.getTradeTypes?.(market, submarket, symbol, category).then(trade_types => {
                             const trade_type_field = this.getField('TRADETYPE_LIST');
                             trade_type_field.updateOptions(trade_types, {
-                                default_value: trade_type,
+                                default_value: getSafeDropdownValue(trade_types, trade_type),
                                 should_pretend_empty: true,
                                 event_group: event.group,
                             });
