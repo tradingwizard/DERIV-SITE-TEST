@@ -64,9 +64,43 @@ const MARKET_DISPLAY: Record<string, string> = {
     derived: 'Derived',
 };
 
+const SUBMARKET_DISPLAY: Record<string, string> = {
+    random_index: 'Continuous Indices',
+    crash_index: 'Crash/Boom Indices',
+    jump_index: 'Jump Indices',
+    random_daily: 'Daily Reset Indices',
+    step_index: 'Step Indices',
+    range_break: 'Range Break Indices',
+    forex_basket: 'Forex Basket',
+    commodity_basket: 'Commodities Basket',
+    commodities_basket: 'Commodities Basket',
+    basket_commodities: 'Commodities Basket',
+    basket_forex: 'Forex Basket',
+};
+
+const SUBMARKET_ALIASES: Record<string, string> = {
+    continuous_index: 'random_index',
+    continuous_indices: 'random_index',
+    volatility_index: 'random_index',
+    volatility_indices: 'random_index',
+    crashboom: 'crash_index',
+    crash_boom: 'crash_index',
+    crash_boom_index: 'crash_index',
+    crash_boom_indices: 'crash_index',
+    boom_crash: 'crash_index',
+    boom_crash_index: 'crash_index',
+    daily_reset_index: 'random_daily',
+    daily_reset_indices: 'random_daily',
+    jump_indices: 'jump_index',
+    step_indices: 'step_index',
+    commodities_basket: 'commodity_basket',
+    basket_commodities: 'commodity_basket',
+};
+
 const humanize = (key?: string): string => {
     if (!key) return '';
     if (MARKET_DISPLAY[key]) return MARKET_DISPLAY[key];
+    if (SUBMARKET_DISPLAY[key]) return SUBMARKET_DISPLAY[key];
     return key
         .split('_')
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
@@ -99,12 +133,18 @@ const normalizeMarket = (market?: string): string | undefined => {
     return market;
 };
 
+const normalizeSubmarket = (submarket?: string): string | undefined => {
+    if (!submarket) return submarket;
+    return SUBMARKET_ALIASES[submarket] ?? submarket;
+};
+
 const normalizeContractRow = (contract: Record<string, any>): Record<string, any> => {
     const c = { ...contract };
 
     if (c.underlying_symbol && !c.symbol) c.symbol = c.underlying_symbol;
     if (c.underlying_symbol_type && !c.submarket) c.submarket = c.underlying_symbol_type;
     if (c.market) c.market = normalizeMarket(c.market);
+    if (c.submarket) c.submarket = normalizeSubmarket(c.submarket);
     if (c.min_duration && !c.min_contract_duration) c.min_contract_duration = c.min_duration;
     if (c.max_duration && !c.max_contract_duration) c.max_contract_duration = c.max_duration;
     if (c.min_contract_duration && typeof c.min_contract_duration === 'number') c.min_contract_duration = `${c.min_contract_duration}s`;
@@ -385,8 +425,10 @@ export class DerivWsAdapter {
                 if (s.underlying_symbol_name && !s.display_name) s.display_name = s.underlying_symbol_name;
                 if (s.underlying_symbol_type && !s.symbol_type) s.symbol_type = s.underlying_symbol_type;
                 if (s.market) s.market = normalizeMarket(s.market);
+                if (!s.submarket && s.underlying_symbol_type) s.submarket = s.underlying_symbol_type;
+                if (s.submarket) s.submarket = normalizeSubmarket(s.submarket);
                 if (!s.market_display_name) s.market_display_name = humanize(s.market);
-                if (!s.submarket_display_name) s.submarket_display_name = humanize(s.submarket);
+                s.submarket_display_name = SUBMARKET_DISPLAY[s.submarket] || humanize(s.submarket);
                 return s;
             });
             debugDeriv('active_symbols response', {

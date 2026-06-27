@@ -76,7 +76,8 @@ export default class ContractsFor {
 
                     const has_matching_category = c.contract_category === real_trade_type;
                     const has_matching_duration = durations.findIndex(d => d.unit === duration) !== -1;
-                    const has_matching_barrier_category = c.barrier_category === barrier_category;
+                    const has_matching_barrier_category =
+                        !c.barrier_category || !barrier_category || c.barrier_category === barrier_category;
                     const has_matching_barrier_type =
                         // Match offset type barriers.
                         (has_selected_offset_type && isOffset(c.barrier || c[barrier_props[index]])) ||
@@ -189,7 +190,8 @@ export default class ContractsFor {
         return contracts.filter(contract => {
             const has_matching_category =
                 contract.contract_category === contract_category ||
-                (contract_category === 'digits' && ['matchesdiffers', 'evenodd', 'overunder'].includes(contract.contract_category));
+                (contract_category === 'digits' &&
+                    ['matchesdiffers', 'evenodd', 'overunder'].includes(contract.contract_category));
             const has_matching_barrier =
                 !contract.barrier_category || !barrier_category || contract.barrier_category === barrier_category;
 
@@ -205,7 +207,7 @@ export default class ContractsFor {
         const getContractsForFromApi = async () => {
             if (this.retrieving_contracts_for[symbol]) {
                 await this.retrieving_contracts_for[symbol];
-                return this.contracts_for[symbol].contracts;
+                return this.contracts_for[symbol]?.contracts || [];
             }
 
             this.retrieving_contracts_for[symbol] = new PendingPromise();
@@ -233,7 +235,7 @@ export default class ContractsFor {
             }
 
             // We don't offer forward-starting contracts in bot.
-            const filtered_contracts = contracts.filter(c => c.start_type !== 'forward');
+            const filtered_contracts = contracts.filter(c => !c.start_type || c.start_type !== 'forward');
             debugDeriv('contracts_for cached', {
                 symbol,
                 count: filtered_contracts.length,

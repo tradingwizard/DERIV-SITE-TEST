@@ -3,6 +3,16 @@ import { config } from '../../../../constants/config';
 import { getContractTypeOptions } from '../../../shared';
 import { excludeOptionFromContextMenu, modifyContextMenu } from '../../../utils';
 
+const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
+
+const getSafeDropdownValue = (options, current_value) => {
+    if (options.some(option => isValidDropdownOption(option) && option[1] === current_value)) {
+        return current_value;
+    }
+
+    return options.find(isValidDropdownOption)?.[1] || options[0]?.[1] || '';
+};
+
 window.Blockly.Blocks.trade_definition_contracttype = {
     init() {
         this.jsonInit({
@@ -55,7 +65,9 @@ window.Blockly.Blocks.trade_definition_contracttype = {
 
                 contract_type_list.updateOptions(contract_type_options, {
                     event_group: event.group,
-                    default_value: is_load_event ? contract_type_list.getValue() : undefined,
+                    default_value: is_load_event
+                        ? getSafeDropdownValue(contract_type_options, contract_type_list.getValue())
+                        : getSafeDropdownValue(contract_type_options, undefined),
                 });
             }
         }

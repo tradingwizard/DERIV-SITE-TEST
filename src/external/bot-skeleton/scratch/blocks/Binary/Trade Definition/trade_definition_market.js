@@ -3,6 +3,16 @@ import ApiHelpers from '../../../../services/api/api-helpers';
 import DBotStore from '../../../dbot-store';
 import { excludeOptionFromContextMenu, modifyContextMenu, runIrreversibleEvents } from '../../../utils';
 /* eslint-disable */
+const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
+
+const getSafeDropdownValue = (options, current_value) => {
+    if (options.some(option => isValidDropdownOption(option) && option[1] === current_value)) {
+        return current_value;
+    }
+
+    return options.find(isValidDropdownOption)?.[1] || options[0]?.[1] || '';
+};
+
 window.Blockly.Blocks.trade_definition_market = {
     init() {
         this.jsonInit({
@@ -72,8 +82,9 @@ window.Blockly.Blocks.trade_definition_market = {
         const market_options = active_symbols.getMarketDropdownOptions();
 
         const populateMarketDropdown = () => {
+            const safe_market = getSafeDropdownValue(market_options, market);
             market_dropdown?.updateOptions(market_options, {
-                default_value: market,
+                default_value: safe_market,
                 should_pretend_empty: true,
                 event_group: event.group,
             });
@@ -83,14 +94,21 @@ window.Blockly.Blocks.trade_definition_market = {
             populateMarketDropdown();
         } else if (event.type === window.Blockly.Events.BLOCK_CHANGE && event.blockId === this.id) {
             if (event.name === 'MARKET_LIST') {
-                submarket_dropdown.updateOptions(active_symbols.getSubmarketDropdownOptions(market), {
-                    default_value: submarket,
+                const safe_market = getSafeDropdownValue(market_options, market);
+                const submarket_options = active_symbols.getSubmarketDropdownOptions(safe_market);
+                const safe_submarket = getSafeDropdownValue(submarket_options, submarket);
+                submarket_dropdown.updateOptions(submarket_options, {
+                    default_value: safe_submarket,
                     should_pretend_empty: true,
                     event_group: event.group,
                 });
             } else if (event.name === 'SUBMARKET_LIST') {
-                symbol_dropdown.updateOptions(active_symbols.getSymbolDropdownOptions(submarket), {
-                    default_value: symbol,
+                const submarket_options = active_symbols.getSubmarketDropdownOptions(market);
+                const safe_submarket = getSafeDropdownValue(submarket_options, submarket);
+                const symbol_options = active_symbols.getSymbolDropdownOptions(safe_submarket);
+                const safe_symbol = getSafeDropdownValue(symbol_options, symbol);
+                symbol_dropdown.updateOptions(symbol_options, {
+                    default_value: safe_symbol,
                     should_pretend_empty: true,
                     event_group: event.group,
                 });

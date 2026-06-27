@@ -13,6 +13,62 @@ const debugDeriv = (label, payload) => {
     console.info(`[debug_deriv] ${label}`, payload);
 };
 
+const DERIVED_SUBMARKET_DISPLAY = {
+    random_index: localize('Continuous Indices'),
+    crash_index: localize('Crash/Boom Indices'),
+    jump_index: localize('Jump Indices'),
+    random_daily: localize('Daily Reset Indices'),
+    step_index: localize('Step Indices'),
+    range_break: localize('Range Break Indices'),
+};
+
+const SUBMARKET_DISPLAY = {
+    ...DERIVED_SUBMARKET_DISPLAY,
+    forex_basket: localize('Forex Basket'),
+    commodity_basket: localize('Commodities Basket'),
+    commodities_basket: localize('Commodities Basket'),
+    basket_commodities: localize('Commodities Basket'),
+    basket_forex: localize('Forex Basket'),
+};
+
+const DERIVED_SUBMARKET_ORDER = ['random_index', 'crash_index', 'jump_index', 'random_daily', 'step_index'];
+
+const FALLBACK_SUBMARKET_OPTIONS = {
+    synthetic_index: [
+        [localize('Continuous Indices'), 'random_index'],
+        [localize('Crash/Boom Indices'), 'crash_index'],
+        [localize('Jump Indices'), 'jump_index'],
+        [localize('Daily Reset Indices'), 'random_daily'],
+        [localize('Step Indices'), 'step_index'],
+    ],
+};
+
+const normalizeSubmarket = submarket => {
+    const aliases = {
+        continuous_index: 'random_index',
+        continuous_indices: 'random_index',
+        volatility_index: 'random_index',
+        volatility_indices: 'random_index',
+        crashboom: 'crash_index',
+        crash_boom: 'crash_index',
+        crash_boom_index: 'crash_index',
+        crash_boom_indices: 'crash_index',
+        daily_reset_index: 'random_daily',
+        daily_reset_indices: 'random_daily',
+        jump_indices: 'jump_index',
+        step_indices: 'step_index',
+        commodities_basket: 'commodity_basket',
+        basket_commodities: 'commodity_basket',
+    };
+
+    return aliases[submarket] || submarket;
+};
+
+const getSubmarketDisplayName = submarket =>
+    SUBMARKET_DISPLAY[submarket] || (submarket ? submarket.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '');
+
+const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
+
 export default class ActiveSymbols {
     constructor(trading_times) {
         this.active_symbols = [];
@@ -79,36 +135,41 @@ export default class ActiveSymbols {
         return this.active_symbols.reduce((processed_symbols, symbol) => {
             if (
                 config().DISABLED_SYMBOLS.includes(symbol.symbol) ||
-                config().DISABLED_SUBMARKETS.includes(symbol.submarket)
+                config().DISABLED_SUBMARKETS.includes(normalizeSubmarket(symbol.submarket))
             ) {
                 return processed_symbols;
             }
 
-            const isExistingValue = (object, prop) => Object.keys(object).findIndex(a => a === symbol[prop]) !== -1;
+            const normalized_symbol = {
+                ...symbol,
+                submarket: normalizeSubmarket(symbol.submarket),
+            };
+            const isExistingValue = (object, prop) =>
+                Object.keys(object).findIndex(a => a === normalized_symbol[prop]) !== -1;
 
             if (!isExistingValue(processed_symbols, 'market')) {
-                processed_symbols[symbol.market] = {
-                    display_name: symbol.market_display_name,
+                processed_symbols[normalized_symbol.market] = {
+                    display_name: normalized_symbol.market_display_name,
                     submarkets: {},
                 };
             }
 
-            const { submarkets } = processed_symbols[symbol.market];
+            const { submarkets } = processed_symbols[normalized_symbol.market];
 
             if (!isExistingValue(submarkets, 'submarket')) {
-                submarkets[symbol.submarket] = {
-                    display_name: symbol.submarket_display_name,
+                submarkets[normalized_symbol.submarket] = {
+                    display_name: getSubmarketDisplayName(normalized_symbol.submarket),
                     symbols: {},
                 };
             }
 
-            const { symbols } = submarkets[symbol.submarket];
+            const { symbols } = submarkets[normalized_symbol.submarket];
 
             if (!isExistingValue(symbols, 'symbol')) {
-                symbols[symbol.symbol] = {
-                    display_name: symbol.display_name,
-                    pip_size: `${symbol.pip}`.length - 2,
-                    is_active: !symbol.is_trading_suspended && symbol.exchange_is_open,
+                symbols[normalized_symbol.symbol] = {
+                    display_name: normalized_symbol.display_name,
+                    pip_size: `${normalized_symbol.pip}`.length - 2,
+                    is_active: !normalized_symbol.is_trading_suspended && normalized_symbol.exchange_is_open,
                 };
             }
 
@@ -233,13 +294,21 @@ export default class ActiveSymbols {
         }
 
         if (submarket_options.length === 0) {
-            return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+            return FALLBACK_SUBMARKET_OPTIONS[market] || config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
         }
         if (market === 'synthetic_index') {
-            submarket_options.sort(a => (a[1] === 'random_index' ? -1 : 1));
+            submarket_options.sort((a, b) => {
+                const index_a = DERIVED_SUBMARKET_ORDER.indexOf(a[1]);
+                const index_b = DERIVED_SUBMARKET_ORDER.indexOf(b[1]);
+                if (index_a === -1 && index_b === -1) return 0;
+                if (index_a === -1) return 1;
+                if (index_b === -1) return -1;
+                return index_a - index_b;
+            });
         }
 
-        return this.sortDropdownOptions(submarket_options, this.isSubmarketClosed);
+        const sorted_options = this.sortDropdownOptions(submarket_options, this.isSubmarketClosed);
+        return sorted_options.some(isValidDropdownOption) ? sorted_options : FALLBACK_SUBMARKET_OPTIONS[market] || sorted_options;
     }
 
     getSymbolDropdownOptions(submarket) {
