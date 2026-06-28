@@ -41,25 +41,8 @@ export const AccountSwitcherWalletItem = observer(
         const is_dtrade_active = dtrade_loginid === active_loginid;
 
         const switchAccount = async (loginId: number) => {
-            const account_list = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-            const token = account_list[loginId];
-
-            // If token is missing, store the currency in session storage and return
-            if (!token) {
-                // Store the currency in session storage
-                if (currency) {
-                    sessionStorage.setItem('query_param_currency', currency);
-                }
-
-                // Set clientHasCurrency to false
-                if (typeof (window as any).setClientHasCurrency === 'function') {
-                    (window as any).setClientHasCurrency(false);
-                }
-                return;
-            }
-
-            localStorage.setItem('authToken', token);
             localStorage.setItem('active_loginid', loginId.toString());
+            localStorage.setItem('account_type', is_virtual ? 'demo' : 'real');
             const account_type =
                 loginId
                     .toString()
@@ -75,7 +58,7 @@ export const AccountSwitcherWalletItem = observer(
             const search_params = new URLSearchParams(window.location.search);
             const selected_account = Object.values(client_accounts)?.find(
                 (acc: any) => acc.loginid === loginId.toString()
-            );
+            ) as { currency?: string } | undefined;
             if (!selected_account) return;
             const account_param = is_virtual ? 'demo' : selected_account.currency;
             search_params.set('account', account_param);

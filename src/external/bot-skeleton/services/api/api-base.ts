@@ -13,7 +13,7 @@ import {
     setIsAuthorizing,
 } from './observables/connection-status-stream';
 import ApiHelpers from './api-helpers';
-import { generateDerivApiInstance, V2GetActiveClientId, V2GetActiveToken } from './appId';
+import { generateDerivApiInstance, getOAuthAccessToken, V2GetActiveClientId, V2GetActiveToken } from './appId';
 import chart_api from './chart-api';
 
 type CurrentSubscription = {
@@ -46,6 +46,25 @@ type TApiBaseApi = {
         };
     };
 };
+
+type TStoredClientAccount = {
+    loginid?: string;
+    token?: string;
+    currency?: string;
+    account_type?: string;
+    balance?: number;
+};
+
+const safeParse = <T,>(value: string | null, fallback: T): T => {
+    try {
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+const isVirtualAccount = (account?: TStoredClientAccount, loginid = '') =>
+    /demo|virtual|vrt/i.test(`${account?.account_type ?? ''} ${loginid}`);
 
 class APIBase {
     api: TApiBaseApi | null = null;
@@ -142,7 +161,7 @@ class APIBase {
             if (this.time_interval) clearInterval(this.time_interval);
             this.time_interval = null;
 
-            if (V2GetActiveToken()) {
+            if (V2GetActiveClientId() && (V2GetActiveToken() || getOAuthAccessToken())) {
                 setIsAuthorizing(true);
                 await this.authorizeAndSubscribe();
             }
@@ -194,16 +213,22 @@ class APIBase {
     };
 
     async authorizeAndSubscribe() {
+        if (!this.api) return;
         const token = V2GetActiveToken();
-        if (!token || !this.api) return;
         const next_account_id = V2GetActiveClientId() ?? '';
-        if (this.is_authorized && this.token === token && this.account_id === next_account_id) return;
-        this.token = token;
+        if (!next_account_id) return;
+        if (this.is_authorized && this.token === (token ?? '') && this.account_id === next_account_id) return;
+        this.token = token ?? '';
         this.account_id = next_account_id;
         setIsAuthorizing(true);
         setIsAuthorized(false);
 
         try {
+            if (!token) {
+                await this.hydrateAuthenticatedWebSocket(next_account_id);
+                return;
+            }
+
             const { authorize, error } = await this.api.authorize(this.token);
             if (error) {
                 if (error.code === 'InvalidToken') {
@@ -247,6 +272,76 @@ class APIBase {
         } finally {
             setIsAuthorizing(false);
         }
+    }
+
+    async hydrateAuthenticatedWebSocket(account_id: string) {
+        if (!this.api) return;
+
+        const response = await this.api.send({ balance: 1 });
+        const error = response?.error;
+        if (error) {
+            this.is_authorized = false;
+            setIsAuthorized(false);
+            if (error.code !== 'AuthorizationRequired') {
+                console.error('Authenticated WebSocket account probe failed:', error);
+            }
+            return error;
+        }
+
+        const balance = response?.balance;
+        if (!balance) {
+            this.is_authorized = false;
+            setIsAuthorized(false);
+            return;
+        }
+
+        const client_accounts = safeParse<Record<string, TStoredClientAccount>>(
+            localStorage.getItem('clientAccounts'),
+            {}
+        );
+        const active_account = client_accounts[account_id] ?? { loginid: account_id };
+        const account_list = Object.entries(client_accounts).map(([loginid, account]) => ({
+            balance: Number(account.balance ?? (loginid === account_id ? balance.balance : 0) ?? 0),
+            currency: account.currency ?? balance.currency ?? '',
+            is_disabled: 0,
+            is_virtual: isVirtualAccount(account, loginid) ? 1 : 0,
+            landing_company_name: '',
+            linked_to: [],
+            loginid,
+        }));
+
+        const auth_data = {
+            account_list,
+            balance: Number(balance.balance ?? 0),
+            country: localStorage.getItem('client.country') ?? '',
+            currency: balance.currency ?? active_account.currency ?? '',
+            email: '',
+            fullname: '',
+            is_virtual: isVirtualAccount(active_account, account_id) ? 1 : 0,
+            landing_company_fullname: '',
+            landing_company_name: '',
+            linked_to: [],
+            local_currencies: {},
+            loginid: account_id,
+            preferred_language: 'EN',
+            scopes: [],
+            upgradeable_landing_companies: [],
+            user_id: 0,
+        } as TAuthData;
+
+        this.account_info = auth_data;
+        setAccountList(auth_data.account_list || []);
+        setAuthData(auth_data);
+        setIsAuthorized(true);
+        this.is_authorized = true;
+        localStorage.setItem('client_account_details', JSON.stringify(auth_data.account_list));
+
+        if (this.has_active_symbols) {
+            this.toggleRunButton(false);
+        } else {
+            this.active_symbols_promise = this.getActiveSymbols();
+        }
+        this.subscribe().catch(() => undefined);
     }
 
     async getSelfExclusion() {

@@ -61,10 +61,9 @@ const CallbackPage = () => {
                     { loginid: string; token: string; currency: string; account_type: string }
                 > = {};
                 accounts.forEach(account => {
-                    accountsList[account.account_id] = access_token;
                     clientAccounts[account.account_id] = {
                         loginid: account.account_id,
-                        token: access_token,
+                        token: '',
                         currency: account.currency,
                         account_type: account.account_type,
                     };
@@ -72,6 +71,7 @@ const CallbackPage = () => {
 
                 localStorage.setItem('accountsList', JSON.stringify(accountsList));
                 localStorage.setItem('clientAccounts', JSON.stringify(clientAccounts));
+                sessionStorage.setItem('deriv_accounts', JSON.stringify(accounts));
 
                 // Choose the active account based on the requested currency (if any).
                 const requested = params.get('account') || sessionStorage.getItem('query_param_currency') || '';
@@ -87,6 +87,7 @@ const CallbackPage = () => {
 
                 localStorage.setItem('authToken', access_token);
                 localStorage.setItem('active_loginid', active.account_id);
+                localStorage.setItem('account_type', active.account_type);
                 setLoggedStateCookie('true');
 
                 const selected_currency = isVirtualAccount(active) ? 'demo' : active.currency || 'USD';

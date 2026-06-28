@@ -12,9 +12,11 @@ export const clearAuthData = (is_reload: boolean = true): void => {
     localStorage.removeItem('callback_token');
     localStorage.removeItem('authToken');
     localStorage.removeItem('active_loginid');
+    localStorage.removeItem('account_type');
     localStorage.removeItem('client.accounts');
     localStorage.removeItem('client.country');
     sessionStorage.removeItem('query_param_currency');
+    sessionStorage.removeItem('deriv_accounts');
     if (is_reload) {
         location.reload();
     }
@@ -31,8 +33,10 @@ export const handleOidcAuthFailure = (error: any): void => {
     // Clear auth data
     localStorage.removeItem('authToken');
     localStorage.removeItem('active_loginid');
+    localStorage.removeItem('account_type');
     localStorage.removeItem('clientAccounts');
     localStorage.removeItem('accountsList');
+    sessionStorage.removeItem('deriv_accounts');
 
     // Set logged_state cookie to false
     Cookies.set('logged_state', 'false', {

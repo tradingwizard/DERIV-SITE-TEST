@@ -10,7 +10,7 @@ import { getUrlBase } from '@/components/shared';
 import TncStatusUpdateModal from '@/components/tnc-status-update-modal';
 import TransactionDetailsModal from '@/components/transaction-details';
 import { api_base, ApiHelpers, ServerTime } from '@/external/bot-skeleton';
-import { V2GetActiveToken } from '@/external/bot-skeleton/services/api/appId';
+import { getOAuthAccessToken } from '@/external/bot-skeleton/services/api/appId';
 import { CONNECTION_STATUS } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import { useApiBase } from '@/hooks/useApiBase';
 import useIntercom from '@/hooks/useIntercom';
@@ -65,7 +65,7 @@ const AppContent = observer(() => {
 
     useLiveChat(livechat_client_information);
 
-    const token = V2GetActiveToken() ?? null;
+    const token = getOAuthAccessToken() ?? null;
     useIntercom(token);
 
     useEffect(() => {

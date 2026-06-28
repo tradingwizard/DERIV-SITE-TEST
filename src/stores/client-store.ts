@@ -357,7 +357,9 @@ export default class ClientStore {
         localStorage.removeItem('active_loginid');
         localStorage.removeItem('accountsList');
         localStorage.removeItem('authToken');
+        localStorage.removeItem('account_type');
         localStorage.removeItem('clientAccounts');
+        sessionStorage.removeItem('deriv_accounts');
         removeCookies('client_information');
 
         setIsAuthorized(false);

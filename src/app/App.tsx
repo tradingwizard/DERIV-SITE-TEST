@@ -105,12 +105,12 @@ function App() {
         try {
             const parsed_client_accounts = JSON.parse(client_accounts) as Record<
                 string,
-                { loginid: string; token: string; currency: string; account_type?: string }
+                { loginid: string; token?: string; currency: string; account_type?: string }
             >;
 
-            const updateLocalStorage = (token: string, loginid: string) => {
-                localStorage.setItem('authToken', token);
+            const updateLocalStorage = (loginid: string, account_type?: string) => {
                 localStorage.setItem('active_loginid', loginid);
+                if (account_type) localStorage.setItem('account_type', account_type);
             };
 
             const entries = Object.entries(parsed_client_accounts);
@@ -120,7 +120,7 @@ function App() {
                 const demo = entries.find(([loginid, account]) => isVirtual(account.account_type, loginid));
                 if (demo) {
                     const [loginid, account] = demo;
-                    updateLocalStorage(String(account.token), loginid);
+                    updateLocalStorage(loginid, account.account_type);
                 }
                 return;
             }
@@ -136,7 +136,7 @@ function App() {
 
             if (real) {
                 const [loginid, account] = real;
-                updateLocalStorage(String(account.token), loginid);
+                updateLocalStorage(loginid, account.account_type);
             }
         } catch (e) {
             console.warn('Error', e); // eslint-disable-line no-console

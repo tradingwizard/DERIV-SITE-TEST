@@ -135,20 +135,49 @@ export const getLoginId = () => {
     return null;
 };
 
-export const V2GetActiveToken = () => {
+const safeParse = (value, fallback = {}) => {
+    try {
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+export const getOAuthAccessToken = () => {
     const token = localStorage.getItem('authToken');
     if (token && token !== 'null') return token;
     return null;
 };
 
+const isLegacyAuthorizeToken = token => {
+    if (!token || typeof token !== 'string') return false;
+
+    const oauth_token = getOAuthAccessToken();
+    if (oauth_token && token === oauth_token) return false;
+
+    // OAuth/Ory/JWT-style access tokens must never be passed to legacy authorize.
+    return !token.includes('.');
+};
+
+export const getLegacyAuthorizeToken = () => {
+    const active_loginid = getLoginId();
+    if (!active_loginid) return null;
+
+    const accounts_list = safeParse(localStorage.getItem('accountsList'));
+    const token = accounts_list?.[active_loginid];
+
+    return isLegacyAuthorizeToken(token) ? token : null;
+};
+
+export const V2GetActiveToken = () => getLegacyAuthorizeToken();
+
 export const V2GetActiveClientId = () => {
-    if (!V2GetActiveToken()) return null;
     return getLoginId();
 };
 
 export const getToken = () => {
     return {
-        token: V2GetActiveToken() ?? undefined,
+        token: getLegacyAuthorizeToken() ?? undefined,
         account_id: getLoginId() ?? undefined,
     };
 };

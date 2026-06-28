@@ -27,6 +27,14 @@ export const DERIV_WS_BASE = process.env.DERIV_WS_BASE || 'wss://api.derivws.com
 export const DERIV_OAUTH_SCOPE = process.env.DERIV_OAUTH_SCOPE || 'trade account_manage';
 export const LEGACY_WS_APP_ID = process.env.LEGACY_WS_APP_ID || `${APP_IDS.PRODUCTION}`;
 const DERIV_AFFILIATE_ID = process.env.DERIV_AFFILIATE_ID || '11789';
+const safeParse = <T,>(value: string | null, fallback: T): T => {
+    try {
+        return value ? JSON.parse(value) : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
 export const DERIV_AFFILIATE = {
     id: DERIV_AFFILIATE_ID,
     referral_code: process.env.DERIV_AFFILIATE_REFERRAL || '3Z48MP6KHY4D',
@@ -132,11 +140,41 @@ export const getSocketURL = async () => {
         const accounts = await fetchAccounts(token);
         if (!accounts.length) return getDefaultServerURL();
 
+        const existing_accounts_list = safeParse<Record<string, string>>(
+            window.localStorage.getItem('accountsList'),
+            {}
+        );
+        const accountsList = Object.entries(existing_accounts_list).reduce<Record<string, string>>(
+            (legacy_tokens, [account_id, account_token]) => {
+                if (account_token && account_token !== token && !account_token.includes('.')) {
+                    legacy_tokens[account_id] = account_token;
+                }
+                return legacy_tokens;
+            },
+            {}
+        );
+        const clientAccounts = accounts.reduce<
+            Record<string, { loginid: string; token: string; currency: string; account_type: string }>
+        >((client_accounts, account) => {
+            client_accounts[account.account_id] = {
+                loginid: account.account_id,
+                token: accountsList[account.account_id] ?? '',
+                currency: account.currency,
+                account_type: account.account_type,
+            };
+            return client_accounts;
+        }, {});
+        window.localStorage.setItem('accountsList', JSON.stringify(accountsList));
+        window.localStorage.setItem('clientAccounts', JSON.stringify(clientAccounts));
+        window.sessionStorage.setItem('deriv_accounts', JSON.stringify(accounts));
+
         const active_loginid = window.localStorage.getItem('active_loginid');
         const selected_account =
             (active_loginid && accounts.find(account => account.account_id === active_loginid)) ||
             accounts.find(isVirtualAccount) ||
             accounts[0];
+        window.localStorage.setItem('active_loginid', selected_account.account_id);
+        window.localStorage.setItem('account_type', selected_account.account_type);
 
         return fetchWebSocketUrl(token, selected_account.account_id);
     } catch (error) {
