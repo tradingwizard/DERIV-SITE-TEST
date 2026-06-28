@@ -35,7 +35,7 @@ import '../components/bot-notification/bot-notification.scss';
 const AppContent = observer(() => {
     const [is_api_initialized, setIsApiInitialized] = React.useState(false);
     const [is_loading, setIsLoading] = React.useState(true);
-    const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(true);
+    const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(false);
     const [offline_timeout, setOfflineTimeout] = React.useState(null);
     const store = useStore();
     const { app, transactions, common, client } = store;
@@ -81,6 +81,16 @@ const AppContent = observer(() => {
             common.setSocketOpened(false);
         }
     }, [common, connectionStatus, offline_timeout]);
+
+    useEffect(() => {
+        if (is_api_initialized || connectionStatus === CONNECTION_STATUS.OPENED) return undefined;
+
+        const api_initialization_timeout = setTimeout(() => {
+            setIsApiInitialized(true);
+        }, 6000);
+
+        return () => clearTimeout(api_initialization_timeout);
+    }, [connectionStatus, is_api_initialized]);
 
     // Handle offline scenarios - don't wait indefinitely for API
     useEffect(() => {
@@ -131,12 +141,16 @@ const AppContent = observer(() => {
             if (clients_logged_out_country_code) {
                 const is_restricted = !!bot_restricted_countries[clients_logged_out_country_code];
                 setIsEuErrorLoading(client.is_eu_country && is_restricted);
+            } else {
+                setIsEuErrorLoading(false);
             }
         } else {
             // For logged in users
             if (clients_logged_in_country_code) {
                 const is_restricted = !!bot_restricted_countries[clients_logged_in_country_code];
                 setIsEuErrorLoading(is_restricted);
+            } else {
+                setIsEuErrorLoading(false);
             }
         }
     }, [is_eu_country, clients_logged_out_country_code, clients_logged_in_country_code, is_client_logged_in]);
