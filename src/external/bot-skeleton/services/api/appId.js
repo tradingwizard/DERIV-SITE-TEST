@@ -6,6 +6,58 @@ let derivApiInstance = null;
 let derivApiPromise = null;
 let currentWebSocketBaseURL = null;
 
+const buildForgetResponse = request => {
+    const msg_type = request?.forget_all != null ? 'forget_all' : 'forget';
+    return {
+        [msg_type]: request?.[msg_type],
+        echo_req: request,
+        msg_type,
+    };
+};
+
+const installCleanupCompatibility = api => {
+    if (!api || api.__gts_cleanup_compat_installed) return api;
+
+    const originalSend = api.send?.bind(api);
+    const originalForget = api.forget?.bind(api);
+
+    api.send = request => {
+        if (request?.forget_all != null) {
+            return Promise.resolve(buildForgetResponse(request));
+        }
+
+        if (!originalSend) {
+            return Promise.reject(new Error('API send is not available.'));
+        }
+
+        return originalSend(request).catch(error => {
+            if (request?.forget != null || request?.forget_all != null) {
+                return buildForgetResponse(request);
+            }
+            throw error;
+        });
+    };
+
+    api.forget = id => {
+        const request = { forget: id };
+        if (!id) return Promise.resolve(buildForgetResponse(request));
+
+        if (originalForget) {
+            return originalForget(id).catch(() => buildForgetResponse(request));
+        }
+
+        return api.send(request).catch(() => buildForgetResponse(request));
+    };
+
+    api.forgetAll = (...types) => {
+        const value = types.length === 1 ? types[0] : types;
+        return Promise.resolve(buildForgetResponse({ forget_all: value }));
+    };
+
+    api.__gts_cleanup_compat_installed = true;
+    return api;
+};
+
 export const clearDerivApiInstance = () => {
     if (derivApiInstance?.connection) {
         try {
@@ -44,7 +96,7 @@ export const generateDerivApiInstance = async (forceNew = false) => {
             middleware: new APIMiddleware({}),
         });
 
-        derivApiInstance = api;
+        derivApiInstance = installCleanupCompatibility(api);
 
         return new Promise((resolve, reject) => {
             const cleanup = () => {

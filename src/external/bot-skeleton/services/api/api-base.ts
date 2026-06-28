@@ -64,6 +64,15 @@ class APIBase {
     active_symbols_promise: Promise<unknown[]> | null = null;
     common_store: CommonStore | undefined;
     landing_company: string | null = null;
+    is_initializing = false;
+    init_promise: Promise<void> | null = null;
+    onsocketopenBound: (() => void) | null = null;
+    onsocketcloseBound: (() => void) | null = null;
+
+    constructor() {
+        this.onsocketopenBound = this.onsocketopen.bind(this);
+        this.onsocketcloseBound = this.onsocketclose.bind(this);
+    }
 
     unsubscribeAllSubscriptions = () => {
         this.current_auth_subscriptions?.forEach(subscription_promise => {
@@ -92,41 +101,61 @@ class APIBase {
     }
 
     async init(force_create_connection = false) {
-        this.toggleRunButton(true);
+        if (this.is_initializing && this.init_promise) return this.init_promise;
 
-        if (this.api) {
-            this.unsubscribeAllSubscriptions();
-        }
+        this.is_initializing = true;
+        this.init_promise = (async () => {
+            this.toggleRunButton(true);
 
-        if (!this.api || this.api?.connection.readyState !== 1 || force_create_connection) {
-            if (this.api?.connection) {
-                ApiHelpers.disposeInstance();
-                setConnectionStatus(CONNECTION_STATUS.CLOSED);
-                this.api.disconnect();
-                this.api.connection.removeEventListener('open', this.onsocketopen.bind(this));
-                this.api.connection.removeEventListener('close', this.onsocketclose.bind(this));
+            if (this.api) {
+                this.unsubscribeAllSubscriptions();
             }
 
-            this.api = await generateDerivApiInstance(force_create_connection);
-            this.api?.connection.addEventListener('open', this.onsocketopen.bind(this));
-            this.api?.connection.addEventListener('close', this.onsocketclose.bind(this));
+            if (!this.api || this.api?.connection.readyState !== 1 || force_create_connection) {
+                if (this.api?.connection) {
+                    ApiHelpers.disposeInstance();
+                    setConnectionStatus(CONNECTION_STATUS.CLOSED);
+                    if (this.onsocketopenBound) {
+                        this.api.connection.removeEventListener('open', this.onsocketopenBound);
+                    }
+                    if (this.onsocketcloseBound) {
+                        this.api.connection.removeEventListener('close', this.onsocketcloseBound);
+                    }
+                    this.api.disconnect();
+                }
+
+                this.api = await generateDerivApiInstance(force_create_connection);
+                if (this.onsocketopenBound) this.api?.connection.addEventListener('open', this.onsocketopenBound);
+                if (this.onsocketcloseBound) this.api?.connection.addEventListener('close', this.onsocketcloseBound);
+
+                if (this.api?.connection?.readyState === 1) {
+                    this.onsocketopen();
+                }
+            }
+
+            if (!this.has_active_symbols && !V2GetActiveToken()) {
+                this.active_symbols_promise = this.getActiveSymbols();
+            }
+
+            this.initEventListeners();
+
+            if (this.time_interval) clearInterval(this.time_interval);
+            this.time_interval = null;
+
+            if (V2GetActiveToken()) {
+                setIsAuthorizing(true);
+                await this.authorizeAndSubscribe();
+            }
+
+            chart_api.init(force_create_connection);
+        })();
+
+        try {
+            return await this.init_promise;
+        } finally {
+            this.is_initializing = false;
+            this.init_promise = null;
         }
-
-        if (!this.has_active_symbols && !V2GetActiveToken()) {
-            this.active_symbols_promise = this.getActiveSymbols();
-        }
-
-        this.initEventListeners();
-
-        if (this.time_interval) clearInterval(this.time_interval);
-        this.time_interval = null;
-
-        if (V2GetActiveToken()) {
-            setIsAuthorizing(true);
-            await this.authorizeAndSubscribe();
-        }
-
-        chart_api.init(force_create_connection);
     }
 
     getConnectionStatus() {
@@ -156,8 +185,7 @@ class APIBase {
     }
 
     reconnectIfNotConnected = () => {
-        // eslint-disable-next-line no-console
-        console.log('connection state: ', this.api?.connection?.readyState);
+        if (this.is_initializing) return;
         if (this.api?.connection?.readyState && this.api?.connection?.readyState > 1) {
             // eslint-disable-next-line no-console
             console.log('Info: Connection to the server was closed, trying to reconnect.');
@@ -168,8 +196,10 @@ class APIBase {
     async authorizeAndSubscribe() {
         const token = V2GetActiveToken();
         if (!token || !this.api) return;
+        const next_account_id = V2GetActiveClientId() ?? '';
+        if (this.is_authorized && this.token === token && this.account_id === next_account_id) return;
         this.token = token;
-        this.account_id = V2GetActiveClientId() ?? '';
+        this.account_id = next_account_id;
         setIsAuthorizing(true);
         setIsAuthorized(false);
 
@@ -208,7 +238,10 @@ class APIBase {
         } catch (e) {
             console.error('Authorization failed:', e);
             this.is_authorized = false;
-            clearAuthData();
+            const error_code = (e as any)?.code || (e as any)?.error?.code;
+            if (error_code === 'InvalidToken') {
+                clearAuthData();
+            }
             setIsAuthorized(false);
             globalObserver.emit('Error', e);
         } finally {
