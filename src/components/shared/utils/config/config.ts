@@ -1,4 +1,5 @@
 import { LocalStorageConstants, LocalStorageUtils, URLUtils } from '@deriv-com/utils';
+import { fetchAccounts, fetchWebSocketUrl, isVirtualAccount } from '@/external/bot-skeleton/services/api/deriv-rest';
 import { isStaging } from '../url/helpers';
 
 export const APP_IDS = {
@@ -24,6 +25,7 @@ export const DERIV_AUTH_URL = process.env.DERIV_AUTH_URL || 'https://auth.deriv.
 export const DERIV_API_REST_BASE = process.env.DERIV_API_REST_BASE || 'https://api.derivws.com';
 export const DERIV_WS_BASE = process.env.DERIV_WS_BASE || 'wss://api.derivws.com/trading/v1/options/ws';
 export const DERIV_OAUTH_SCOPE = process.env.DERIV_OAUTH_SCOPE || 'trade account_manage';
+export const LEGACY_WS_APP_ID = process.env.LEGACY_WS_APP_ID || `${APP_IDS.LOCALHOST}`;
 const DERIV_AFFILIATE_ID = process.env.DERIV_AFFILIATE_ID || '11789';
 export const DERIV_AFFILIATE = {
     id: DERIV_AFFILIATE_ID,
@@ -62,9 +64,14 @@ export const isTestLink = () => {
 
 export const isLocal = () => /localhost(:\d+)?$/i.test(window.location.hostname);
 
+const getLegacyWebSocketURL = (server_url = 'ws.derivws.com') => {
+    if (/^wss?:\/\//i.test(server_url)) return server_url;
+    return `wss://${server_url}/websockets/v3?app_id=${LEGACY_WS_APP_ID}`;
+};
+
 const getDefaultServerURL = () => {
     if (isTestLink()) {
-        return 'ws.derivws.com';
+        return getLegacyWebSocketURL('ws.derivws.com');
     }
 
     let active_loginid_from_url;
@@ -78,7 +85,7 @@ const getDefaultServerURL = () => {
     const is_real = loginid && !/^(VRT|VRW)/.test(loginid);
 
     const server = is_real ? 'green' : 'blue';
-    const server_url = `${server}.derivws.com`;
+    const server_url = getLegacyWebSocketURL(`${server}.derivws.com`);
 
     return server_url;
 };
@@ -114,13 +121,30 @@ export const getAppId = () => {
     return app_id;
 };
 
-export const getSocketURL = () => {
+export const getSocketURL = async () => {
     const local_storage_server_url = window.localStorage.getItem('config.server_url');
-    if (local_storage_server_url) return local_storage_server_url;
+    if (local_storage_server_url) return getLegacyWebSocketURL(local_storage_server_url);
 
-    const server_url = getDefaultServerURL();
+    const token = window.localStorage.getItem('authToken');
+    if (!token) return getDefaultServerURL();
 
-    return server_url;
+    try {
+        const accounts = await fetchAccounts(token);
+        if (!accounts.length) return getDefaultServerURL();
+
+        const active_loginid = window.localStorage.getItem('active_loginid');
+        const selected_account =
+            (active_loginid && accounts.find(account => account.account_id === active_loginid)) ||
+            accounts.find(isVirtualAccount) ||
+            accounts[0];
+
+        return fetchWebSocketUrl(token, selected_account.account_id);
+    } catch (error) {
+        // Keep the Builder usable if the authenticated account WebSocket cannot
+        // be prepared; logged-out/public metadata still works on the stable
+        // legacy Deriv WebSocket.
+        return getDefaultServerURL();
+    }
 };
 
 export const checkAndSetEndpointFromUrl = () => {

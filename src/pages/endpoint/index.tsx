@@ -1,6 +1,5 @@
-import React from 'react';
 import { useFormik } from 'formik';
-import { getAppId, getDefaultAppIdAndUrl, getSocketURL } from '@/components/shared';
+import { getAppId, getDefaultAppIdAndUrl } from '@/components/shared';
 import { Button, Input, Text } from '@deriv-com/ui';
 import { LocalStorageConstants } from '@deriv-com/utils';
 import './endpoint.scss';
@@ -8,7 +7,8 @@ const Endpoint = () => {
     const formik = useFormik({
         initialValues: {
             appId: localStorage.getItem(LocalStorageConstants.configAppId) ?? getAppId(),
-            serverUrl: localStorage.getItem(LocalStorageConstants.configServerURL) ?? getSocketURL(),
+            serverUrl:
+                localStorage.getItem(LocalStorageConstants.configServerURL) ?? getDefaultAppIdAndUrl().server_url,
         },
         onSubmit: values => {
             localStorage.setItem(LocalStorageConstants.configServerURL, values.serverUrl);

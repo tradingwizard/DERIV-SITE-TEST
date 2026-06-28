@@ -31,16 +31,21 @@ type TApiBaseApi = {
         addEventListener: (event: string, callback: () => void) => void;
         removeEventListener: (event: string, callback: () => void) => void;
     };
-    send: (data: unknown) => void;
+    send: (data: unknown) => Promise<any>;
     disconnect: () => void;
-    authorize: (token: string) => Promise<{ authorize: TAuthData; error: unknown }>;
+    authorize: (token: string) => Promise<{ authorize: TAuthData; error: any }>;
     getSelfExclusion: () => Promise<unknown>;
+    time: () => Promise<any>;
+    websiteStatus: () => Promise<any>;
+    getSettings: () => Promise<any>;
+    getAccountStatus: () => Promise<any>;
+    landingCompany: (request: unknown) => Promise<any>;
     onMessage: () => {
-        subscribe: (callback: (message: unknown) => void) => {
+        subscribe: (callback: (message: any) => void) => {
             unsubscribe: () => void;
         };
     };
-} & ReturnType<typeof generateDerivApiInstance>;
+};
 
 class APIBase {
     api: TApiBaseApi | null = null;
@@ -102,7 +107,7 @@ class APIBase {
                 this.api.connection.removeEventListener('close', this.onsocketclose.bind(this));
             }
 
-            this.api = generateDerivApiInstance();
+            this.api = await generateDerivApiInstance(force_create_connection);
             this.api?.connection.addEventListener('open', this.onsocketopen.bind(this));
             this.api?.connection.addEventListener('close', this.onsocketclose.bind(this));
         }
