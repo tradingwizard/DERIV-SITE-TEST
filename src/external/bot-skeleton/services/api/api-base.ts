@@ -56,19 +56,23 @@ class APIBase {
     active_symbols = [];
     current_auth_subscriptions: SubscriptionPromise[] = [];
     is_authorized = false;
-    active_symbols_promise: Promise<void> | null = null;
+    active_symbols_promise: Promise<unknown[]> | null = null;
     common_store: CommonStore | undefined;
     landing_company: string | null = null;
 
     unsubscribeAllSubscriptions = () => {
         this.current_auth_subscriptions?.forEach(subscription_promise => {
-            subscription_promise.then(({ subscription }) => {
-                if (subscription?.id) {
-                    this.api?.send({
-                        forget: subscription.id,
-                    });
-                }
-            });
+            subscription_promise
+                .then(({ subscription }) => {
+                    if (subscription?.id) {
+                        this.api
+                            ?.send({
+                                forget: subscription.id,
+                            })
+                            .catch(() => undefined);
+                    }
+                })
+                .catch(() => undefined);
         });
         this.current_auth_subscriptions = [];
     };
@@ -194,7 +198,7 @@ class APIBase {
             } else {
                 this.active_symbols_promise = this.getActiveSymbols();
             }
-            this.subscribe();
+            this.subscribe().catch(() => undefined);
             // this.getSelfExclusion(); commented this so we dont call it from two places
         } catch (e) {
             console.error('Authorization failed:', e);
@@ -233,21 +237,37 @@ class APIBase {
 
         const streamsToSubscribe = ['balance', 'transaction', 'proposal_open_contract'];
 
-        await Promise.all(streamsToSubscribe.map(subscribeToStream));
+        await Promise.allSettled(streamsToSubscribe.map(subscribeToStream));
     }
 
     getActiveSymbols = async () => {
-        await doUntilDone(() => this.api?.send({ active_symbols: 'brief' }), [], this).then(
-            ({ active_symbols = [], error = {} }) => {
+        return doUntilDone(() => this.api?.send({ active_symbols: 'brief' }), [], this).then(
+            ({ active_symbols = [] }) => {
                 const pip_sizes = {};
                 if (active_symbols.length) this.has_active_symbols = true;
-                active_symbols.forEach(({ symbol, pip }: { symbol: string; pip: string }) => {
-                    (pip_sizes as Record<string, number>)[symbol] = +(+pip).toExponential().substring(3);
-                });
+                active_symbols.forEach(
+                    ({
+                        symbol,
+                        underlying_symbol,
+                        pip,
+                        pip_size,
+                    }: {
+                        symbol: string;
+                        underlying_symbol?: string;
+                        pip?: string;
+                        pip_size?: string;
+                    }) => {
+                        const symbol_code = underlying_symbol || symbol;
+                        const pip_value = pip ?? pip_size;
+                        if (symbol_code && pip_value) {
+                            (pip_sizes as Record<string, number>)[symbol_code] = +(+pip_value).toExponential().substring(3);
+                        }
+                    }
+                );
                 this.pip_sizes = pip_sizes as Record<string, number>;
                 this.toggleRunButton(false);
                 this.active_symbols = active_symbols;
-                return active_symbols || error;
+                return Array.isArray(active_symbols) ? active_symbols : [];
             }
         );
     };

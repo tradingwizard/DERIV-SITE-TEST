@@ -1,6 +1,7 @@
 import { config } from '../../constants/config';
 import PendingPromise from '../../utils/pending-promise';
 import { api_base } from './api-base';
+import { DURATIONS, TRADE_TYPE_CATEGORY_OPTIONS, TRADE_TYPE_OPTIONS, uniqueOptions } from './builder-compat';
 
 const isDebugDeriv = () =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
@@ -354,13 +355,7 @@ export default class ContractsFor {
         }
 
         if (durations.length === 0) {
-            const fallback_durations = contracts_for_category.length > 0
-                ? [
-                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[0][1], min: 1, max: 10 },
-                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[1][1], min: 1, max: 59 },
-                      { display: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][0], unit: DEFAULT_DURATION_DROPDOWN_OPTIONS[2][1], min: 1, max: 60 },
-                  ]
-                : NOT_AVAILABLE_DURATIONS;
+            const fallback_durations = contracts_for_category.length > 0 ? DURATIONS : NOT_AVAILABLE_DURATIONS;
             debugDeriv('duration fallback', {
                 symbol,
                 trade_type,
@@ -640,6 +635,11 @@ export default class ContractsFor {
             return sorted_categories;
         }
 
+        if (contracts.length > 0) {
+            debugDeriv('trade type categories fallback', { market, submarket, symbol, contracts: contracts.length });
+            return TRADE_TYPE_CATEGORY_OPTIONS;
+        }
+
         debugDeriv('trade type categories unavailable', { market, submarket, symbol, contracts: contracts.length });
         return NOT_AVAILABLE_DROPDOWN_OPTIONS;
     }
@@ -671,7 +671,14 @@ export default class ContractsFor {
             }
         }
 
-        const options = trade_types.length > 0 ? trade_types : config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+        const fallback_options = contracts_for_category => {
+            if (contracts_for_category.length === 0) return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+            return TRADE_TYPE_OPTIONS[trade_type_category] || config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+        };
+        const contracts_for_selected_category = await this.getContractsByTradeType(symbol, trade_type_category);
+        const options = uniqueOptions(
+            trade_types.length > 0 ? trade_types : fallback_options(contracts_for_selected_category)
+        );
         debugDeriv('trade type options', { market, submarket, symbol, trade_type_category, options });
         return options;
     }

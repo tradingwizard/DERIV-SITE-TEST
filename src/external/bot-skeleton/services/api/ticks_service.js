@@ -165,7 +165,7 @@ export default class TicksService {
 
         const subscription = [...(ohlcSubscriptions ? Array.from(ohlcSubscriptions.values()) : [])];
 
-        Promise.all(subscription.map(id => doUntilDone(() => api_base.api.forget(id))));
+        Promise.allSettled(subscription.map(id => doUntilDone(() => api_base.api.forget(id)))).catch(() => undefined);
 
         this.subscriptions = new Map();
     }

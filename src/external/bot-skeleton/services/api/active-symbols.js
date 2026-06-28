@@ -3,90 +3,28 @@ import { localize } from '@deriv-com/translations';
 import { config } from '../../constants/config';
 import PendingPromise from '../../utils/pending-promise';
 import { api_base } from './api-base';
+import {
+    MARKET_OPTIONS,
+    SUBMARKET_OPTIONS,
+    SYMBOL_OPTIONS,
+    SUBMARKET_ORDER,
+    firstValidOption,
+    generateSymbolDisplayName,
+    getMarketDisplayName,
+    getSubmarketDisplayName,
+    isSymbolOpen,
+    normalizeMarket,
+    normalizeSubmarket,
+    uniqueOptions,
+} from './builder-compat';
 
 const isDebugDeriv = () =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
-
 const debugDeriv = (label, payload) => {
     if (!isDebugDeriv()) return;
     // eslint-disable-next-line no-console
     console.info(`[debug_deriv] ${label}`, payload);
 };
-
-const DERIVED_SUBMARKET_DISPLAY = {
-    random_index: localize('Continuous Indices'),
-    crash_index: localize('Crash/Boom Indices'),
-    jump_index: localize('Jump Indices'),
-    random_daily: localize('Daily Reset Indices'),
-    step_index: localize('Step Indices'),
-    range_break: localize('Range Break Indices'),
-};
-
-const SUBMARKET_DISPLAY = {
-    ...DERIVED_SUBMARKET_DISPLAY,
-    forex_basket: localize('Forex Basket'),
-    commodity_basket: localize('Commodities Basket'),
-    commodities_basket: localize('Commodities Basket'),
-    basket_commodities: localize('Commodities Basket'),
-    basket_forex: localize('Forex Basket'),
-};
-
-const DERIVED_SUBMARKET_ORDER = ['random_index', 'crash_index', 'jump_index', 'random_daily', 'step_index'];
-
-const FALLBACK_SUBMARKET_OPTIONS = {
-    synthetic_index: [
-        [localize('Continuous Indices'), 'random_index'],
-        [localize('Crash/Boom Indices'), 'crash_index'],
-        [localize('Jump Indices'), 'jump_index'],
-        [localize('Daily Reset Indices'), 'random_daily'],
-        [localize('Step Indices'), 'step_index'],
-    ],
-};
-
-const normalizeLookupKey = value =>
-    `${value || ''}`
-        .trim()
-        .toLowerCase()
-        .replace(/&/g, 'and')
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '');
-
-const normalizeSubmarket = submarket => {
-    const aliases = {
-        random_index: 'random_index',
-        random: 'random_index',
-        continuous_index: 'random_index',
-        continuous_indices: 'random_index',
-        volatility: 'random_index',
-        volatility_index: 'random_index',
-        volatility_indices: 'random_index',
-        crash_index: 'crash_index',
-        crash_indices: 'crash_index',
-        crashboom: 'crash_index',
-        crash_boom: 'crash_index',
-        crash_boom_index: 'crash_index',
-        crash_boom_indices: 'crash_index',
-        boom_crash: 'crash_index',
-        boom_crash_index: 'crash_index',
-        boom_crash_indices: 'crash_index',
-        random_daily: 'random_daily',
-        daily_reset_index: 'random_daily',
-        daily_reset_indices: 'random_daily',
-        jump_index: 'jump_index',
-        jump_indices: 'jump_index',
-        step_index: 'step_index',
-        step_indices: 'step_index',
-        commodity_basket: 'commodity_basket',
-        commodities_basket: 'commodity_basket',
-        basket_commodities: 'commodity_basket',
-    };
-
-    const normalized_key = normalizeLookupKey(submarket);
-    return aliases[normalized_key] || submarket;
-};
-
-const getSubmarketDisplayName = submarket =>
-    SUBMARKET_DISPLAY[submarket] || (submarket ? submarket.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '');
 
 const isValidDropdownOption = option => Array.isArray(option) && option[0] && option[1] && option[1] !== 'na';
 
@@ -99,6 +37,7 @@ export default class ActiveSymbols {
         this.is_initialised = false;
         this.processed_symbols = {};
         this.trading_times = trading_times;
+        this.has_initialization_error = false;
     }
 
     async retrieveActiveSymbols(is_forced_update = false) {
@@ -112,18 +51,48 @@ export default class ActiveSymbols {
         this.is_initialised = true;
 
         if (api_base.has_active_symbols) {
-            this.active_symbols = api_base?.active_symbols ?? [];
+            this.active_symbols = Array.isArray(api_base?.active_symbols) ? api_base.active_symbols : [];
         } else {
-            await api_base.active_symbols_promise;
-            this.active_symbols = api_base?.active_symbols ?? [];
+            if (!api_base.active_symbols_promise) {
+                api_base.active_symbols_promise = api_base.getActiveSymbols();
+            }
+
+            try {
+                const active_symbols = await api_base.active_symbols_promise;
+                this.active_symbols = Array.isArray(active_symbols)
+                    ? active_symbols
+                    : Array.isArray(api_base?.active_symbols)
+                      ? api_base.active_symbols
+                      : [];
+            } catch (error) {
+                debugDeriv('active symbols initial load failed', { error: error?.message || error });
+                this.active_symbols = [];
+            }
         }
 
+        if (!this.active_symbols.length) {
+            try {
+                const active_symbols = await api_base.getActiveSymbols();
+                this.active_symbols = Array.isArray(active_symbols)
+                    ? active_symbols
+                    : Array.isArray(api_base?.active_symbols)
+                      ? api_base.active_symbols
+                      : [];
+            } catch (error) {
+                debugDeriv('active symbols retry failed', { error: error?.message || error });
+                this.active_symbols = [];
+            }
+        }
+
+        this.has_initialization_error = this.active_symbols.length === 0;
         this.processed_symbols = this.processActiveSymbols();
 
         // TODO: fix need to look into it as the method is not present
         this.trading_times.onMarketOpenCloseChanged = changes => {
             Object.keys(changes).forEach(symbol_name => {
-                const symbol_obj = this.active_symbols[symbol_name];
+                const symbol_obj = this.active_symbols.find(
+                    symbol => symbol.symbol === symbol_name || symbol.underlying_symbol === symbol_name
+                );
 
                 if (symbol_obj) {
                     symbol_obj.exchange_is_open = changes[symbol_name];
@@ -154,26 +123,34 @@ export default class ActiveSymbols {
 
     processActiveSymbols() {
         return this.active_symbols.reduce((processed_symbols, symbol) => {
+            const symbol_code = symbol.underlying_symbol || symbol.symbol;
+            const normalized_market = normalizeMarket(symbol.market);
+            const normalized_submarket = normalizeSubmarket(
+                symbol.submarket || symbol.subgroup || symbol.underlying_symbol_type || symbol.symbol_type
+            );
+
             if (
-                config().DISABLED_SYMBOLS.includes(symbol.symbol) ||
-                config().DISABLED_SUBMARKETS.includes(normalizeSubmarket(symbol.submarket))
+                config().DISABLED_SYMBOLS.includes(symbol_code) ||
+                config().DISABLED_SUBMARKETS.includes(normalized_submarket)
             ) {
                 return processed_symbols;
             }
 
-            const normalized_submarket = normalizeSubmarket(
-                symbol.submarket || symbol.subgroup || symbol.underlying_symbol_type || symbol.symbol_type
-            );
             const normalized_symbol = {
                 ...symbol,
+                symbol: symbol_code,
+                market: normalized_market,
                 submarket: normalized_submarket,
+                display_name: symbol.display_name || symbol.underlying_symbol_name || generateSymbolDisplayName(symbol_code),
+                market_display_name: getMarketDisplayName(normalized_market),
+                submarket_display_name: getSubmarketDisplayName(normalized_submarket),
             };
             const isExistingValue = (object, prop) =>
                 Object.keys(object).findIndex(a => a === normalized_symbol[prop]) !== -1;
 
             if (!isExistingValue(processed_symbols, 'market')) {
                 processed_symbols[normalized_symbol.market] = {
-                    display_name: normalized_symbol.market_display_name,
+                    display_name: normalized_symbol.market_display_name || getMarketDisplayName(normalized_symbol.market),
                     submarkets: {},
                 };
             }
@@ -182,7 +159,7 @@ export default class ActiveSymbols {
 
             if (!isExistingValue(submarkets, 'submarket')) {
                 submarkets[normalized_symbol.submarket] = {
-                    display_name: getSubmarketDisplayName(normalized_symbol.submarket),
+                    display_name: normalized_symbol.submarket_display_name || getSubmarketDisplayName(normalized_symbol.submarket),
                     symbols: {},
                 };
             }
@@ -192,8 +169,8 @@ export default class ActiveSymbols {
             if (!isExistingValue(symbols, 'symbol')) {
                 symbols[normalized_symbol.symbol] = {
                     display_name: normalized_symbol.display_name,
-                    pip_size: `${normalized_symbol.pip}`.length - 2,
-                    is_active: !normalized_symbol.is_trading_suspended && normalized_symbol.exchange_is_open,
+                    pip_size: `${normalized_symbol.pip || normalized_symbol.pip_size || 0}`.length - 2,
+                    is_active: isSymbolOpen(normalized_symbol),
                 };
             }
 
@@ -283,7 +260,7 @@ export default class ActiveSymbols {
         });
 
         if (market_options.length === 0) {
-            return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+            return MARKET_OPTIONS;
         }
         market_options.sort(a => (a[1] === 'synthetic_index' ? -1 : 1));
 
@@ -318,12 +295,12 @@ export default class ActiveSymbols {
         }
 
         if (submarket_options.length === 0) {
-            return FALLBACK_SUBMARKET_OPTIONS[market] || config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+            return SUBMARKET_OPTIONS[market] || config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
         }
         if (market === 'synthetic_index') {
             submarket_options.sort((a, b) => {
-                const index_a = DERIVED_SUBMARKET_ORDER.indexOf(a[1]);
-                const index_b = DERIVED_SUBMARKET_ORDER.indexOf(b[1]);
+                const index_a = SUBMARKET_ORDER.indexOf(a[1]);
+                const index_b = SUBMARKET_ORDER.indexOf(b[1]);
                 if (index_a === -1 && index_b === -1) return 0;
                 if (index_a === -1) return 1;
                 if (index_b === -1) return -1;
@@ -332,7 +309,7 @@ export default class ActiveSymbols {
         }
 
         const sorted_options = this.sortDropdownOptions(submarket_options, this.isSubmarketClosed);
-        return sorted_options.some(isValidDropdownOption) ? sorted_options : FALLBACK_SUBMARKET_OPTIONS[market] || sorted_options;
+        return sorted_options.some(isValidDropdownOption) ? sorted_options : SUBMARKET_OPTIONS[market] || sorted_options;
     }
 
     getSymbolDropdownOptions(submarket) {
@@ -354,11 +331,14 @@ export default class ActiveSymbols {
             return accumulator;
         }, []);
 
-        if (symbol_options.length === 0) {
-            return config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
+        const safe_symbol_options = uniqueOptions(symbol_options);
+
+        if (safe_symbol_options.length === 0) {
+            return SYMBOL_OPTIONS[submarket] || config().NOT_AVAILABLE_DROPDOWN_OPTIONS;
         }
 
-        return this.sortDropdownOptions(symbol_options, this.isSymbolClosed);
+        const sorted_options = this.sortDropdownOptions(safe_symbol_options, this.isSymbolClosed);
+        return firstValidOption(sorted_options) ? sorted_options : SYMBOL_OPTIONS[submarket] || sorted_options;
     }
 
     isMarketClosed(market_name) {
@@ -393,11 +373,10 @@ export default class ActiveSymbols {
     }
 
     isSymbolClosed(symbol_name) {
-        return this.active_symbols.some(
-            active_symbol =>
-                active_symbol.symbol === symbol_name &&
-                (!active_symbol.exchange_is_open || active_symbol.is_trading_suspended)
+        const active_symbol = this.active_symbols.find(
+            symbol => symbol.symbol === symbol_name || symbol.underlying_symbol === symbol_name
         );
+        return active_symbol ? !isSymbolOpen(active_symbol) : false;
     }
 
     sortDropdownOptions = (dropdown_options, closedFunc) => {

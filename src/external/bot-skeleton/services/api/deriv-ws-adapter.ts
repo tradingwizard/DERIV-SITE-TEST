@@ -156,27 +156,61 @@ const normalizeSubmarket = (submarket?: string): string | undefined => {
     return SUBMARKET_ALIASES[normalizeLookupKey(submarket)] ?? submarket;
 };
 
-const normalizeContractRow = (contract: Record<string, any>): Record<string, any> => {
+const normalizeDuration = (duration: any): string | undefined => {
+    if (duration == null) return undefined;
+    if (typeof duration === 'number') return `${duration}s`;
+    if (typeof duration === 'string') return duration;
+    if (typeof duration === 'object') {
+        const value = duration.value ?? duration.min ?? duration.max ?? duration.duration;
+        const unit = duration.unit ?? duration.duration_unit ?? 's';
+        if (value != null) return `${value}${unit}`;
+    }
+    return undefined;
+};
+
+const inferContractCategory = (contract: Record<string, any>): string | undefined => {
+    const type = contract.contract_type;
+    if (['DIGITMATCH', 'DIGITDIFF'].includes(type)) return 'matchesdiffers';
+    if (['DIGITEVEN', 'DIGITODD'].includes(type)) return 'evenodd';
+    if (['DIGITOVER', 'DIGITUNDER'].includes(type)) return 'overunder';
+    if (type === 'ACCU') return 'accumulator';
+    if (['CALL', 'PUT'].includes(type)) return 'callput';
+    if (['CALLE', 'PUTE'].includes(type)) return 'callputequal';
+    if (['ONETOUCH', 'NOTOUCH'].includes(type)) return 'touchnotouch';
+    if (['EXPIRYRANGE', 'EXPIRYMISS'].includes(type)) return 'endsinout';
+    if (['RANGE', 'UPORDOWN'].includes(type)) return 'staysinout';
+    if (['ASIANU', 'ASIAND'].includes(type)) return 'asians';
+    if (['RESETCALL', 'RESETPUT'].includes(type)) return 'reset';
+    if (['TICKHIGH', 'TICKLOW'].includes(type)) return 'highlowticks';
+    if (['RUNHIGH', 'RUNLOW'].includes(type)) return 'runs';
+    return contract.contract_category;
+};
+
+const normalizeContractRow = (
+    contract: Record<string, any>,
+    symbol_meta?: { market?: string; submarket?: string; symbol?: string }
+): Record<string, any> => {
     const c = { ...contract };
 
     if (c.underlying_symbol && !c.symbol) c.symbol = c.underlying_symbol;
     if (c.underlying_symbol_type && !c.submarket) c.submarket = c.underlying_symbol_type;
+    if (!c.symbol && symbol_meta?.symbol) c.symbol = symbol_meta.symbol;
+    if (!c.market && symbol_meta?.market) c.market = symbol_meta.market;
+    if (!c.submarket && symbol_meta?.submarket) c.submarket = symbol_meta.submarket;
     if (c.market) c.market = normalizeMarket(c.market);
     if (c.submarket) c.submarket = normalizeSubmarket(c.submarket);
     if (c.min_duration && !c.min_contract_duration) c.min_contract_duration = c.min_duration;
     if (c.max_duration && !c.max_contract_duration) c.max_contract_duration = c.max_duration;
-    if (c.min_contract_duration && typeof c.min_contract_duration === 'number') c.min_contract_duration = `${c.min_contract_duration}s`;
-    if (c.max_contract_duration && typeof c.max_contract_duration === 'number') c.max_contract_duration = `${c.max_contract_duration}s`;
+    c.min_contract_duration = normalizeDuration(c.min_contract_duration);
+    c.max_contract_duration = normalizeDuration(c.max_contract_duration);
     if (!c.expiry_type && c.min_contract_duration) {
         c.expiry_type = `${c.min_contract_duration}`.endsWith('t') ? 'tick' : 'intraday';
     }
     if (DIGIT_CONTRACT_TYPES.has(c.contract_type) && (!c.barrier_category || c.barrier_category === 'digit')) {
         c.barrier_category = 'non_financial';
     }
-    if (!c.contract_category && DIGIT_CONTRACT_TYPES.has(c.contract_type)) {
-        if (['DIGITMATCH', 'DIGITDIFF'].includes(c.contract_type)) c.contract_category = 'matchesdiffers';
-        if (['DIGITEVEN', 'DIGITODD'].includes(c.contract_type)) c.contract_category = 'evenodd';
-        if (['DIGITOVER', 'DIGITUNDER'].includes(c.contract_type)) c.contract_category = 'overunder';
+    if (!c.contract_category || ['digit', 'digits'].includes(c.contract_category)) {
+        c.contract_category = inferContractCategory(c);
     }
     if (DIGIT_CONTRACT_CATEGORIES.has(c.contract_category)) {
         c.trade_type_category = 'digits';
@@ -228,6 +262,7 @@ export class DerivWsAdapter {
     private bearer: string | null = null;
     private keep_alive: ReturnType<typeof setInterval> | null = null;
     private manually_closed = false;
+    private active_symbol_meta = new Map<string, { market?: string; submarket?: string; symbol?: string }>();
 
     constructor() {
         this.connection = new ConnectionFacade(() => this.ws);
@@ -341,11 +376,18 @@ export class DerivWsAdapter {
         let last_error: any;
         for (let i = 0; i < attempts; i++) {
             try {
+                debugDeriv('otp websocket attempt', { account_id: accountId, attempt: i + 1 });
                 const ws_url = await fetchWebSocketUrl(token, accountId);
                 await this.connect(ws_url);
+                debugDeriv('otp websocket connected', { account_id: accountId, attempt: i + 1 });
                 return;
             } catch (e) {
                 last_error = e;
+                debugDeriv('otp websocket failed', {
+                    account_id: accountId,
+                    attempt: i + 1,
+                    message: (e as Error)?.message,
+                });
                 if (i < attempts - 1) {
                     await new Promise(r => setTimeout(r, 600 * (i + 1)));
                 }
@@ -420,7 +462,8 @@ export class DerivWsAdapter {
 
         if (req.__legacy_contracts_for) {
             delete req.__legacy_contracts_for;
-        } else if (typeof req.contracts_for === 'string') {
+        }
+        if (typeof req.contracts_for === 'string') {
             req.underlying_symbol = req.contracts_for;
             req.contracts_for = 1;
         }
@@ -449,8 +492,15 @@ export class DerivWsAdapter {
                 if (s.market) s.market = normalizeMarket(s.market);
                 if (!s.submarket && s.underlying_symbol_type) s.submarket = s.underlying_symbol_type;
                 if (s.submarket) s.submarket = normalizeSubmarket(s.submarket);
-                if (!s.market_display_name) s.market_display_name = humanize(s.market);
+                s.market_display_name = MARKET_DISPLAY[s.market] || humanize(s.market);
                 s.submarket_display_name = SUBMARKET_DISPLAY[s.submarket] || humanize(s.submarket);
+                if (s.symbol) {
+                    this.active_symbol_meta.set(s.symbol, {
+                        symbol: s.symbol,
+                        market: s.market,
+                        submarket: s.submarket,
+                    });
+                }
                 return s;
             });
             debugDeriv('active_symbols response', {
@@ -468,9 +518,23 @@ export class DerivWsAdapter {
         }
 
         if (msg.msg_type === 'contracts_for' && Array.isArray(msg.contracts_for?.available)) {
+            const requested_symbol =
+                msg.echo_req?.underlying_symbol ||
+                (typeof msg.echo_req?.contracts_for === 'string' ? msg.echo_req.contracts_for : undefined) ||
+                msg.contracts_for?.underlying_symbol;
+            const requested_symbol_meta = requested_symbol ? this.active_symbol_meta.get(requested_symbol) : undefined;
             msg.contracts_for = {
                 ...msg.contracts_for,
-                available: msg.contracts_for.available.map(normalizeContractRow),
+                available: msg.contracts_for.available.map((contract: any) =>
+                    normalizeContractRow(
+                        {
+                            symbol: requested_symbol,
+                            ...contract,
+                        },
+                        this.active_symbol_meta.get(contract.symbol || contract.underlying_symbol || requested_symbol) ||
+                            requested_symbol_meta
+                    )
+                ),
             };
             debugDeriv('contracts_for response', {
                 count: msg.contracts_for.available.length,
@@ -593,9 +657,22 @@ export class DerivWsAdapter {
         };
     }
 
+    private buildForgetResponse(request: Record<string, any>): Record<string, any> {
+        const msg_type = request.forget_all != null ? 'forget_all' : 'forget';
+        return {
+            [msg_type]: request[msg_type],
+            echo_req: request,
+            msg_type,
+        };
+    }
+
     // --- public DerivAPIBasic-compatible surface ---------------------------
 
     send(request: Record<string, any>): Promise<any> {
+        if (request.forget_all != null) {
+            return Promise.resolve(this.buildForgetResponse(request));
+        }
+
         const req_id = this.req_id++;
         const translated = this.translateRequest(request);
         translated.req_id = req_id;
@@ -666,12 +743,16 @@ export class DerivWsAdapter {
     }
 
     forget(id: string): Promise<any> {
-        return this.send({ forget: id });
+        if (!id) {
+            return Promise.resolve(this.buildForgetResponse({ forget: id }));
+        }
+
+        return this.send({ forget: id }).catch(() => this.buildForgetResponse({ forget: id }));
     }
 
     forgetAll(...types: string[]): Promise<any> {
         const value = types.length === 1 ? types[0] : types;
-        return this.send({ forget_all: value });
+        return Promise.resolve(this.buildForgetResponse({ forget_all: value }));
     }
 
     getSelfExclusion(): Promise<any> {
@@ -701,15 +782,16 @@ export class DerivWsAdapter {
     }
 
     getSettings(): Promise<any> {
-        return this.send({ get_settings: 1 });
+        return this.send({ get_settings: 1 }).catch(() => ({ get_settings: {} }));
     }
 
     getAccountStatus(): Promise<any> {
-        return this.send({ get_account_status: 1 });
+        return this.send({ get_account_status: 1 }).catch(() => ({ get_account_status: { status: [] } }));
     }
 
     landingCompany(args?: Record<string, any>): Promise<any> {
-        return this.send({ landing_company: 1, ...(args || {}) });
+        const request = { landing_company: 1, ...(args || {}) };
+        return this.send(request).catch(() => ({ landing_company: {}, echo_req: request }));
     }
 
     activeSymbols(args?: Record<string, any>): Promise<any> {
@@ -725,7 +807,7 @@ export class DerivWsAdapter {
     }
 
     balanceAll(): Promise<any> {
-        return this.send({ balance: 1, account: 'all' });
+        return this.send({ balance: 1, account: 'all' }).catch(() => ({ balance: { accounts: {} } }));
     }
 
     /**
@@ -747,7 +829,12 @@ export class DerivWsAdapter {
     async authorize(token: string): Promise<{ authorize?: any; error?: any }> {
         this.bearer = token;
         try {
+            debugDeriv('authorize start', { has_token: Boolean(token) });
             const accounts = await fetchAccounts(token);
+            debugDeriv('authorize accounts', {
+                count: accounts.length,
+                account_ids: accounts.map(a => a.account_id),
+            });
             if (!accounts.length) {
                 return { error: { code: 'NoAccount', message: 'No options trading accounts were found.' } };
             }
@@ -759,8 +846,14 @@ export class DerivWsAdapter {
             this.manually_closed = false;
             await this.connectWithOtpRetry(token, active.account_id);
 
+            debugDeriv('authorize complete', {
+                active_account_id: active.account_id,
+                is_virtual: isVirtualAccount(active),
+                currency: active.currency,
+            });
             return { authorize: this.buildAuthorizeResponse(accounts, active) };
         } catch (error: any) {
+            debugDeriv('authorize failed', { code: error?.code, message: error?.message });
             return { error: { code: error?.code || 'AuthError', message: error?.message || 'Authorization failed.' } };
         }
     }
