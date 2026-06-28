@@ -25,7 +25,7 @@ export const DERIV_AUTH_URL = process.env.DERIV_AUTH_URL || 'https://auth.deriv.
 export const DERIV_API_REST_BASE = process.env.DERIV_API_REST_BASE || 'https://api.derivws.com';
 export const DERIV_WS_BASE = process.env.DERIV_WS_BASE || 'wss://api.derivws.com/trading/v1/options/ws';
 export const DERIV_OAUTH_SCOPE = process.env.DERIV_OAUTH_SCOPE || 'trade account_manage';
-export const LEGACY_WS_APP_ID = process.env.LEGACY_WS_APP_ID || `${APP_IDS.LOCALHOST}`;
+export const LEGACY_WS_APP_ID = process.env.LEGACY_WS_APP_ID || `${APP_IDS.PRODUCTION}`;
 const DERIV_AFFILIATE_ID = process.env.DERIV_AFFILIATE_ID || '11789';
 export const DERIV_AFFILIATE = {
     id: DERIV_AFFILIATE_ID,

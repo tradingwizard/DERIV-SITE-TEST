@@ -46,6 +46,7 @@ export default defineConfig({
                 DERIV_API_REST_BASE: JSON.stringify(process.env.DERIV_API_REST_BASE),
                 DERIV_WS_BASE: JSON.stringify(process.env.DERIV_WS_BASE),
                 DERIV_OAUTH_SCOPE: JSON.stringify(process.env.DERIV_OAUTH_SCOPE),
+                LEGACY_WS_APP_ID: JSON.stringify(process.env.LEGACY_WS_APP_ID),
                 DERIV_AFFILIATE_ID: JSON.stringify(process.env.DERIV_AFFILIATE_ID),
                 DERIV_AFFILIATE_REFERRAL: JSON.stringify(process.env.DERIV_AFFILIATE_REFERRAL),
             },
