@@ -1,8 +1,8 @@
 import { flow } from 'mobx';
 import { ActiveSymbols } from '@deriv/api-types';
-import { getInitialLanguage, localize } from '@deriv-com/translations';
+import { localize } from '@deriv-com/translations';
+import { redirectToLogin } from '@/utils/pkce';
 import { WS } from '../../services';
-import { redirectToLogin } from '../login';
 import { LocalStore } from '../storage';
 
 type TResidenceList = {
@@ -20,7 +20,7 @@ type TIsSymbolOpen = {
     exchange_is_open: 0 | 1;
 };
 
-export const showUnavailableLocationError = flow(function* (showError, is_logged_in) {
+export const showUnavailableLocationError = flow(function* (showError, _is_logged_in) {
     const website_status = yield WS.wait('website_status');
     const residence_list: TResidenceList = yield WS.residenceList();
 
@@ -37,7 +37,7 @@ export const showUnavailableLocationError = flow(function* (showError, is_logged
         message: localize('If you have an account, log in to continue.'),
         header,
         redirect_label: localize('Log in'),
-        redirectOnClick: () => redirectToLogin(is_logged_in, getInitialLanguage()),
+        redirectOnClick: () => redirectToLogin(),
         should_show_refresh: false,
     });
 });

@@ -11,6 +11,15 @@ import { DERIV_AFFILIATE, DERIV_AUTH_URL, DERIV_OAUTH_SCOPE, GTS_APP_ID } from '
 const VERIFIER_KEY = 'pkce_code_verifier';
 const STATE_KEY = 'pkce_state';
 
+const isDebugDeriv = () =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
+
+const debugDeriv = (label: string, payload: Record<string, unknown>) => {
+    if (!isDebugDeriv()) return;
+    // eslint-disable-next-line no-console
+    console.info(`[debug_deriv] ${label}`, payload);
+};
+
 const toBase64Url = (bytes: Uint8Array): string => {
     let str = '';
     bytes.forEach(b => (str += String.fromCharCode(b)));
@@ -68,6 +77,16 @@ export const buildAuthorizeUrl = async (options: { isSignup?: boolean; account?:
 /** Redirects the browser to the Deriv login (or signup) page. */
 export const redirectToLogin = async (options: { isSignup?: boolean; account?: string } = {}): Promise<void> => {
     const url = await buildAuthorizeUrl(options);
+    const parsed_url = new URL(url);
+    debugDeriv('pkce redirect', {
+        auth_origin: parsed_url.origin,
+        auth_path: parsed_url.pathname,
+        client_id: parsed_url.searchParams.get('client_id'),
+        redirect_uri: parsed_url.searchParams.get('redirect_uri'),
+        response_type: parsed_url.searchParams.get('response_type'),
+        is_signup: Boolean(options.isSignup),
+        account: options.account || null,
+    });
     window.location.assign(url);
 };
 
