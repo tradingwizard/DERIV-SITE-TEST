@@ -8,6 +8,9 @@ import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
+import { clearAuthData } from '@/utils/auth-utils';
+import { completePkceLogin, markPkceLoginFailed } from '@/utils/pkce-account';
+import { clearPkceState, getOAuthRedirectUri, getStoredState } from '@/utils/pkce';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
 import './app-root.scss';
@@ -75,6 +78,56 @@ const router = createBrowserRouter(
 );
 
 function App() {
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const state = params.get('state');
+        const oauth_error = params.get('error');
+        const is_root_callback = window.location.pathname === '/' && (Boolean(code) || Boolean(oauth_error));
+
+        if (!is_root_callback) return;
+
+        const processing_key = `pkce_root_callback_${code || oauth_error || 'error'}`;
+        if (sessionStorage.getItem(processing_key)) return;
+        sessionStorage.setItem(processing_key, '1');
+
+        if (oauth_error) {
+            clearPkceState();
+            window.location.replace(window.location.origin);
+            return;
+        }
+
+        if (!code) {
+            window.location.replace(window.location.origin);
+            return;
+        }
+
+        const expected_state = getStoredState();
+        if (!expected_state || !state || expected_state !== state) {
+            clearAuthData(false);
+            clearPkceState();
+            markPkceLoginFailed();
+            window.location.replace(window.location.origin);
+            return;
+        }
+
+        completePkceLogin({
+            code,
+            redirectUri: getOAuthRedirectUri(),
+            requestedAccount: params.get('account'),
+        })
+            .then(selected_currency => {
+                window.location.replace(`${window.location.origin}/dashboard?account=${selected_currency}`);
+            })
+            .catch(error => {
+                // eslint-disable-next-line no-console
+                console.error('OAuth root callback failed:', error);
+                clearAuthData(false);
+                markPkceLoginFailed();
+                window.location.replace(window.location.origin);
+            });
+    }, []);
+
     React.useEffect(() => {
         // Use the invalid token handler hook to automatically retrigger OIDC authentication
         // when an invalid token is detected and the cookie logged state is true

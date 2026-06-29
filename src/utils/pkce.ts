@@ -6,10 +6,20 @@
  * returned code for an access token via our own backend (the token exchange
  * must never happen in the browser).
  */
-import { DERIV_AFFILIATE, DERIV_AUTH_URL, DERIV_OAUTH_SCOPE, GTS_APP_ID } from '@/components/shared/utils/config/config';
+import {
+    DERIV_AFFILIATE,
+    DERIV_AUTH_URL,
+    DERIV_OAUTH_SCOPE,
+    GTS_APP_ID,
+    LEGACY_WS_APP_ID,
+} from '@/components/shared/utils/config/config';
 
 const VERIFIER_KEY = 'pkce_code_verifier';
 const STATE_KEY = 'pkce_state';
+const REFERENCE_VERIFIER_KEY = 'oauth_code_verifier';
+const REFERENCE_VERIFIER_TIMESTAMP_KEY = 'oauth_code_verifier_timestamp';
+const REFERENCE_STATE_KEY = 'oauth_csrf_token';
+const REFERENCE_STATE_TIMESTAMP_KEY = 'oauth_csrf_token_timestamp';
 
 const isDebugDeriv = () =>
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug_deriv');
@@ -38,7 +48,9 @@ const sha256 = async (input: string): Promise<Uint8Array> => {
     return new Uint8Array(digest);
 };
 
-export const getOAuthRedirectUri = (): string => `${window.location.origin}/callback`;
+export const getOAuthRedirectUri = (): string => `${window.location.origin}/`;
+
+export const getOAuthCallbackRedirectUri = (): string => `${window.location.origin}/callback`;
 
 /**
  * Builds the Deriv authorize URL, persisting the PKCE verifier + state so the
@@ -51,6 +63,10 @@ export const buildAuthorizeUrl = async (options: { isSignup?: boolean; account?:
 
     sessionStorage.setItem(VERIFIER_KEY, verifier);
     sessionStorage.setItem(STATE_KEY, state);
+    sessionStorage.setItem(REFERENCE_VERIFIER_KEY, verifier);
+    sessionStorage.setItem(REFERENCE_VERIFIER_TIMESTAMP_KEY, Date.now().toString());
+    sessionStorage.setItem(REFERENCE_STATE_KEY, state);
+    sessionStorage.setItem(REFERENCE_STATE_TIMESTAMP_KEY, Date.now().toString());
     if (options.account) sessionStorage.setItem('query_param_currency', options.account);
 
     const params = new URLSearchParams({
@@ -61,6 +77,7 @@ export const buildAuthorizeUrl = async (options: { isSignup?: boolean; account?:
         state,
         code_challenge: challenge,
         code_challenge_method: 'S256',
+        app_id: LEGACY_WS_APP_ID,
     });
 
     if (options.isSignup) {
@@ -90,19 +107,24 @@ export const redirectToLogin = async (options: { isSignup?: boolean; account?: s
     window.location.assign(url);
 };
 
-export const getStoredState = (): string | null => sessionStorage.getItem(STATE_KEY);
+export const getStoredState = (): string | null =>
+    sessionStorage.getItem(STATE_KEY) || sessionStorage.getItem(REFERENCE_STATE_KEY);
 
 export const clearPkceState = (): void => {
     sessionStorage.removeItem(VERIFIER_KEY);
     sessionStorage.removeItem(STATE_KEY);
+    sessionStorage.removeItem(REFERENCE_VERIFIER_KEY);
+    sessionStorage.removeItem(REFERENCE_VERIFIER_TIMESTAMP_KEY);
+    sessionStorage.removeItem(REFERENCE_STATE_KEY);
+    sessionStorage.removeItem(REFERENCE_STATE_TIMESTAMP_KEY);
 };
 
 /**
  * Exchanges the authorization code for an access token via our backend.
  * Returns the access token string.
  */
-export const exchangeCodeForToken = async (code: string): Promise<string> => {
-    const code_verifier = sessionStorage.getItem(VERIFIER_KEY);
+export const exchangeCodeForToken = async (code: string, redirect_uri = getOAuthRedirectUri()): Promise<string> => {
+    const code_verifier = sessionStorage.getItem(VERIFIER_KEY) || sessionStorage.getItem(REFERENCE_VERIFIER_KEY);
     if (!code_verifier) throw new Error('Missing PKCE verifier. Please start the login again.');
 
     const response = await fetch('/api/oauth/token', {
@@ -111,7 +133,7 @@ export const exchangeCodeForToken = async (code: string): Promise<string> => {
         body: JSON.stringify({
             code,
             code_verifier,
-            redirect_uri: getOAuthRedirectUri(),
+            redirect_uri,
         }),
     });
 
