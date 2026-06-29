@@ -30,6 +30,7 @@ export default defineConfig({
                 TRACKJS_TOKEN: JSON.stringify(process.env.TRACKJS_TOKEN),
                 APP_ENV: JSON.stringify(process.env.APP_ENV),
                 REF_NAME: JSON.stringify(process.env.REF_NAME),
+                COMMIT_REF: JSON.stringify(process.env.COMMIT_REF),
                 REMOTE_CONFIG_URL: JSON.stringify(process.env.REMOTE_CONFIG_URL),
                 GD_CLIENT_ID: JSON.stringify(process.env.GD_CLIENT_ID),
                 GD_APP_ID: JSON.stringify(process.env.GD_APP_ID),

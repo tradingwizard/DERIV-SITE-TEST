@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie';
 import CommonStore from '@/stores/common-store';
 import { TAuthData } from '@/types/api-types';
+import { debugAuth } from '@/utils/auth-debug';
 import { clearAuthData } from '@/utils/auth-utils';
 import { observer as globalObserver } from '../../utils/observer';
 import { doUntilDone, socket_state } from '../tradeEngine/utils/helpers';
@@ -225,18 +226,31 @@ class APIBase {
 
         try {
             if (!token) {
+                debugAuth('api-base.hydrate-authenticated-websocket', {
+                    source: 'api-base.authorizeAndSubscribe',
+                    account_id: next_account_id,
+                });
                 await this.hydrateAuthenticatedWebSocket(next_account_id);
                 return;
             }
 
+            debugAuth('api-base.legacy-authorize-attempt', {
+                source: 'api-base.authorizeAndSubscribe',
+                account_id: next_account_id,
+            });
             const { authorize, error } = await this.api.authorize(this.token);
             if (error) {
                 if (error.code === 'InvalidToken') {
+                    debugAuth('api-base.invalid-token', {
+                        source: 'api-base.authorizeAndSubscribe',
+                        error_code: error.code,
+                        logged_state_cookie: Cookies.get('logged_state') || null,
+                    });
                     const is_tmb_enabled = window.is_tmb_enabled === true;
                     if (Cookies.get('logged_state') === 'true' && !is_tmb_enabled) {
                         globalObserver.emit('InvalidToken', { error });
                     } else {
-                        clearAuthData();
+                        clearAuthData(true, 'api-base.authorizeAndSubscribe.InvalidToken');
                     }
                 } else {
                     console.error('Authorization error:', error);
@@ -265,7 +279,11 @@ class APIBase {
             this.is_authorized = false;
             const error_code = (e as any)?.code || (e as any)?.error?.code;
             if (error_code === 'InvalidToken') {
-                clearAuthData();
+                debugAuth('api-base.invalid-token', {
+                    source: 'api-base.authorizeAndSubscribe.catch',
+                    error_code,
+                });
+                clearAuthData(true, 'api-base.authorizeAndSubscribe.catch.InvalidToken');
             }
             setIsAuthorized(false);
             globalObserver.emit('Error', e);
@@ -282,6 +300,11 @@ class APIBase {
         if (error) {
             this.is_authorized = false;
             setIsAuthorized(false);
+            debugAuth('api-base.authenticated-websocket-probe-error', {
+                source: 'api-base.hydrateAuthenticatedWebSocket',
+                account_id,
+                error_code: error.code || null,
+            });
             if (error.code !== 'AuthorizationRequired') {
                 console.error('Authenticated WebSocket account probe failed:', error);
             }

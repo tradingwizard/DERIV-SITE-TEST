@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import RootStore from '@/stores/root-store';
+import { debugAuth } from '@/utils/auth-debug';
 import { clearAuthData } from '@/utils/auth-utils';
 import { redirectToLogin } from '@/utils/pkce';
 import { Analytics } from '@deriv-com/analytics';
@@ -44,6 +45,14 @@ export const useOauth2 = ({
         const willEventuallySSO = loggedState === 'true' && !isClientAccountsPopulated;
         const willEventuallySLO = loggedState === 'false' && isClientAccountsPopulated;
 
+        debugAuth('oauth2.login-state-check', {
+            logged_state: loggedState || null,
+            is_client_accounts_populated: isClientAccountsPopulated,
+            will_eventually_sso: willEventuallySSO,
+            will_eventually_slo: willEventuallySLO,
+            is_silent_login_excluded: isSilentLoginExcluded,
+        });
+
         if (!isSilentLoginExcluded && (willEventuallySSO || willEventuallySLO)) {
             setIsSingleLoggingIn(true);
         } else {
@@ -52,6 +61,10 @@ export const useOauth2 = ({
     }, [isClientAccountsPopulated, loggedState, isSilentLoginExcluded]);
 
     const logoutHandler = async () => {
+        debugAuth('oauth2.logout-attempted', {
+            source: 'useOauth2.logoutHandler',
+            client_is_logged_in: client?.is_logged_in ?? null,
+        });
         client?.setIsLoggingOut(true);
         try {
             await client?.logout?.().catch(err => {
@@ -81,12 +94,13 @@ export const useOauth2 = ({
                 /* noop */
             }
             // Clear all stored auth data (reloads the page to the logged-out view).
-            clearAuthData();
+            clearAuthData(true, 'useOauth2.logoutHandler');
         }
     };
 
     const retriggerOAuth2Login = async () => {
         try {
+            debugAuth('oauth2.redirect-to-login', { source: 'useOauth2.retriggerOAuth2Login' });
             await redirectToLogin();
         } catch (error) {
             // eslint-disable-next-line no-console

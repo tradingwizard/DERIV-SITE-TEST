@@ -8,6 +8,7 @@ import { api_base } from '@/external/bot-skeleton';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
+import { debugAuth } from '@/utils/auth-debug';
 import { redirectToLogin } from '@/utils/pkce';
 import { useDevice } from '@deriv-com/ui';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '../shared';
@@ -168,6 +169,10 @@ const Layout = observer(() => {
                     }
                     try {
                         // New Deriv API platform: PKCE OAuth redirect
+                        debugAuth('layout.redirect-to-login', {
+                            source: 'Layout.shouldAuthenticate',
+                            account: query_param_currency,
+                        });
                         await redirectToLogin({ account: query_param_currency });
                     } catch (err) {
                         setIsAuthenticating(false);

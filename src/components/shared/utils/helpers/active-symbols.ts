@@ -1,6 +1,7 @@
 import { flow } from 'mobx';
 import { ActiveSymbols } from '@deriv/api-types';
 import { localize } from '@deriv-com/translations';
+import { debugAuth } from '@/utils/auth-debug';
 import { redirectToLogin } from '@/utils/pkce';
 import { WS } from '../../services';
 import { LocalStore } from '../storage';
@@ -37,7 +38,10 @@ export const showUnavailableLocationError = flow(function* (showError, _is_logge
         message: localize('If you have an account, log in to continue.'),
         header,
         redirect_label: localize('Log in'),
-        redirectOnClick: () => redirectToLogin(),
+        redirectOnClick: () => {
+            debugAuth('active-symbols.redirect-to-login', { source: 'showUnavailableLocationError' });
+            return redirectToLogin();
+        },
         should_show_refresh: false,
     });
 });

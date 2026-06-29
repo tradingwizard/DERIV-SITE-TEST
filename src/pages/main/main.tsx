@@ -16,6 +16,7 @@ import { useOauth2 } from '@/hooks/auth/useOauth2';
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
+import { debugAuth } from '@/utils/auth-debug';
 import { redirectToLogin } from '@/utils/pkce';
 import {
     LabelPairedChartLineCaptionRegularIcon,
@@ -242,6 +243,10 @@ const AppWrapper = observer(() => {
                 await onRenderTMBCheck();
             } else {
                 // New Deriv API platform: PKCE OAuth redirect
+                debugAuth('main.redirect-to-login', {
+                    source: 'Main.handleLoginGeneration',
+                    account: query_param_currency,
+                });
                 await redirectToLogin({ account: query_param_currency });
             }
         } catch (error) {

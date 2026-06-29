@@ -11,6 +11,7 @@ import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { clearAuthData } from '@/utils/auth-utils';
+import { debugAuth } from '@/utils/auth-debug';
 import { redirectToLogin } from '@/utils/pkce';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
 import { Localize, useTranslations } from '@deriv-com/translations';
@@ -142,7 +143,8 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                     <Button
                         tertiary
                         onClick={async () => {
-                            clearAuthData(false);
+                            debugAuth('header.login-clicked');
+                            clearAuthData(false, 'header.loginButton');
                             const getQueryParams = new URLSearchParams(window.location.search);
                             const currency = getQueryParams.get('account') ?? '';
                             const query_param_currency =

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { observer as globalObserver } from '@/external/bot-skeleton/utils/observer';
+import { debugAuth } from '@/utils/auth-debug';
 import { useOauth2 } from './auth/useOauth2';
 
 /**
@@ -17,6 +18,7 @@ export const useInvalidTokenHandler = (): { unregisterHandler: () => void } => {
 
     const handleInvalidToken = () => {
         // Clear localStorage similar to client.logout
+        debugAuth('invalid-token-handler.redirect-to-login', { source: 'useInvalidTokenHandler' });
         retriggerOAuth2Login();
     };
 

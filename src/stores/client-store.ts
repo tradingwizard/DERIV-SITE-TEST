@@ -10,6 +10,7 @@ import {
     setIsAuthorized,
 } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import type { TAuthData, TLandingCompany } from '@/types/api-types';
+import { debugAuth } from '@/utils/auth-debug';
 import type { Balance, GetAccountStatus, GetSettings, WebsiteStatus } from '@deriv/api-types';
 import { Analytics } from '@deriv-com/analytics';
 
@@ -339,6 +340,7 @@ export default class ClientStore {
     };
 
     logout = async () => {
+        debugAuth('client-store.logout-attempted', { source: 'client-store.logout' });
         // reset all the states
         this.account_list = [];
         this.account_status = undefined;

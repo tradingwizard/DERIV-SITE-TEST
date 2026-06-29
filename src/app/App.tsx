@@ -8,6 +8,7 @@ import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
+import { debugAuth, persistAuthDebugFlag } from '@/utils/auth-debug';
 import { clearAuthData } from '@/utils/auth-utils';
 import { completePkceLogin, markPkceLoginFailed } from '@/utils/pkce-account';
 import { clearPkceState, getOAuthRedirectUri, getStoredState } from '@/utils/pkce';
@@ -79,6 +80,9 @@ const router = createBrowserRouter(
 
 function App() {
     React.useEffect(() => {
+        persistAuthDebugFlag();
+        debugAuth('app.mounted');
+
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
@@ -86,25 +90,36 @@ function App() {
         const is_root_callback = window.location.pathname === '/' && (Boolean(code) || Boolean(oauth_error));
 
         if (!is_root_callback) return;
+        debugAuth('root-callback.detected', {
+            has_code: Boolean(code),
+            has_state: Boolean(state),
+            has_error: Boolean(oauth_error),
+        });
 
         const processing_key = `pkce_root_callback_${code || oauth_error || 'error'}`;
         if (sessionStorage.getItem(processing_key)) return;
         sessionStorage.setItem(processing_key, '1');
 
         if (oauth_error) {
+            debugAuth('root-callback.oauth-error', { error: oauth_error });
             clearPkceState();
             window.location.replace(window.location.origin);
             return;
         }
 
         if (!code) {
+            debugAuth('root-callback.missing-code');
             window.location.replace(window.location.origin);
             return;
         }
 
         const expected_state = getStoredState();
         if (!expected_state || !state || expected_state !== state) {
-            clearAuthData(false);
+            debugAuth('root-callback.state-mismatch', {
+                has_expected_state: Boolean(expected_state),
+                has_returned_state: Boolean(state),
+            });
+            clearAuthData(false, 'App.rootCallback.stateMismatch');
             clearPkceState();
             markPkceLoginFailed();
             window.location.replace(window.location.origin);
@@ -117,12 +132,14 @@ function App() {
             requestedAccount: params.get('account'),
         })
             .then(selected_currency => {
+                debugAuth('root-callback.completed', { selected_currency });
                 window.location.replace(`${window.location.origin}/dashboard?account=${selected_currency}`);
             })
             .catch(error => {
                 // eslint-disable-next-line no-console
                 console.error('OAuth root callback failed:', error);
-                clearAuthData(false);
+                debugAuth('root-callback.failed', { message: error?.message || String(error) });
+                clearAuthData(false, 'App.rootCallback.failed');
                 markPkceLoginFailed();
                 window.location.replace(window.location.origin);
             });
@@ -164,6 +181,19 @@ function App() {
             const updateLocalStorage = (loginid: string, account_type?: string) => {
                 localStorage.setItem('active_loginid', loginid);
                 if (account_type) localStorage.setItem('account_type', account_type);
+                debugAuth('account-switch.applied', {
+                    loginid,
+                    account_type: account_type || null,
+                    requested_account: account_currency || null,
+                });
+            };
+
+            const cleanAccountQuery = () => {
+                if (!account_currency) return;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('account');
+                window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+                debugAuth('account-switch.cleaned-account-query');
             };
 
             const entries = Object.entries(parsed_client_accounts);
@@ -174,6 +204,7 @@ function App() {
                 if (demo) {
                     const [loginid, account] = demo;
                     updateLocalStorage(loginid, account.account_type);
+                    cleanAccountQuery();
                 }
                 return;
             }
@@ -190,8 +221,10 @@ function App() {
             if (real) {
                 const [loginid, account] = real;
                 updateLocalStorage(loginid, account.account_type);
+                cleanAccountQuery();
             }
         } catch (e) {
+            debugAuth('account-switch.failed', { message: e instanceof Error ? e.message : String(e) });
             console.warn('Error', e); // eslint-disable-line no-console
         }
     }, []);

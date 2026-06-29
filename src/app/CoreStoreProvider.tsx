@@ -11,6 +11,7 @@ import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { TLandingCompany, TSocketResponseData } from '@/types/api-types';
+import { debugAuth } from '@/utils/auth-debug';
 import type { Balance } from '@deriv/api-types';
 import { localize, useTranslations } from '@deriv-com/translations';
 
@@ -51,6 +52,10 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
 
     useEffect(() => {
         if (isLoggedOutCookie && client?.is_logged_in) {
+            debugAuth('core-store.logout-attempted', {
+                source: 'CoreStoreProvider.loggedOutCookie',
+                client_is_logged_in: client?.is_logged_in,
+            });
             oAuthLogout();
         }
     }, [isLoggedOutCookie, oAuthLogout, client?.is_logged_in]);
@@ -130,8 +135,25 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             client?.setLoginId(activeLoginid);
             client?.setAccountList(accountList);
             client?.setIsLoggedIn(true);
+            debugAuth('core-store.login-state-hydrated', {
+                active_loginid: activeLoginid || null,
+                account_list_count: accountList?.length ?? 0,
+                client_is_logged_in: true,
+            });
         }
     }, [accountList, activeAccount, activeLoginid, client]);
+
+    useEffect(() => {
+        debugAuth('core-store.login-state-check', {
+            is_authorizing: isAuthorizing,
+            is_authorized: isAuthorized,
+            connection_status: connectionStatus,
+            account_list_count: accountList?.length ?? 0,
+            active_loginid: activeLoginid || null,
+            active_account_exists: Boolean(activeAccount),
+            client_is_logged_in: client?.is_logged_in ?? null,
+        });
+    }, [isAuthorizing, isAuthorized, connectionStatus, accountList?.length, activeLoginid, activeAccount, client?.is_logged_in]);
 
     // Surface a clear, actionable error if a logged-in user's authorization
     // finished without success, instead of leaving a blank/non-working page.
@@ -238,6 +260,11 @@ const CoreStoreProvider: React.FC<{ children: React.ReactNode }> = observer(({ c
             const { msg_type, error } = data;
 
             if (msg_type === 'authorize' && (error?.code === 'DisabledClient' || error?.code === 'InvalidToken')) {
+                debugAuth('core-store.logout-attempted', {
+                    source: 'CoreStoreProvider.authorizeMessage',
+                    error_code: error?.code,
+                    msg_type,
+                });
                 await oAuthLogout();
             }
 

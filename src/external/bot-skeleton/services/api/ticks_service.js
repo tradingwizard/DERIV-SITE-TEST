@@ -1,6 +1,7 @@
 /* eslint-disable no-confusing-arrow */
 import { Map } from 'immutable';
 import { clearAuthData } from '@/utils/auth-utils';
+import { debugAuth } from '@/utils/auth-debug';
 import { getLast, historyToTicks } from '../../utils/binary-utils';
 import { observer as globalObserver } from '../../utils/observer';
 import { doUntilDone, getUUID } from '../tradeEngine/utils/helpers';
@@ -283,7 +284,12 @@ export default class TicksService {
                 })
                 .catch(error => {
                     if (error?.code === 'InvalidSymbol') {
-                        clearAuthData();
+                        debugAuth('ticks-service.invalid-symbol-auth-clear', {
+                            source: 'ticks_service.requestTicks',
+                            symbol,
+                            granularity: granularity || null,
+                        });
+                        clearAuthData(true, 'ticks_service.InvalidSymbol');
                     }
                     reject(error);
                 });

@@ -2,11 +2,13 @@
  * Utility functions for authentication-related operations
  */
 import Cookies from 'js-cookie';
+import { debugAuth } from '@/utils/auth-debug';
 
 /**
  * Clears authentication data from local storage and reloads the page
  */
-export const clearAuthData = (is_reload: boolean = true): void => {
+export const clearAuthData = (is_reload: boolean = true, source = 'clearAuthData'): void => {
+    debugAuth('auth-clear.attempted', { source, is_reload });
     localStorage.removeItem('accountsList');
     localStorage.removeItem('clientAccounts');
     localStorage.removeItem('callback_token');
@@ -29,6 +31,11 @@ export const clearAuthData = (is_reload: boolean = true): void => {
 export const handleOidcAuthFailure = (error: any): void => {
     // Log the error
     console.error('OIDC authentication failed:', error);
+    debugAuth('auth-clear.attempted', {
+        source: 'handleOidcAuthFailure',
+        message: error?.message || String(error),
+        is_reload: true,
+    });
 
     // Clear auth data
     localStorage.removeItem('authToken');

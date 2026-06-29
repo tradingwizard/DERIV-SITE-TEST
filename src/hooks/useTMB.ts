@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Cookies from 'js-cookie';
 import { removeCookies } from '@/components/shared/utils/storage/storage';
+import { debugAuth } from '@/utils/auth-debug';
 
 declare global {
     interface Window {
@@ -54,6 +55,7 @@ const useTMB = (): UseTMBReturn => {
     }, [disableTMB]);
 
     const handleLogout = useCallback(() => {
+        debugAuth('tmb.logout-attempted', { source: 'useTMB.handleLogout' });
         localStorage.removeItem('authToken');
         localStorage.removeItem('active_loginid');
         localStorage.removeItem('clientAccounts');

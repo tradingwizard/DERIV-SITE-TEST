@@ -13,6 +13,7 @@ import {
     GTS_APP_ID,
     LEGACY_WS_APP_ID,
 } from '@/components/shared/utils/config/config';
+import { debugAuth } from '@/utils/auth-debug';
 
 const VERIFIER_KEY = 'pkce_code_verifier';
 const STATE_KEY = 'pkce_state';
@@ -95,6 +96,14 @@ export const buildAuthorizeUrl = async (options: { isSignup?: boolean; account?:
 export const redirectToLogin = async (options: { isSignup?: boolean; account?: string } = {}): Promise<void> => {
     const url = await buildAuthorizeUrl(options);
     const parsed_url = new URL(url);
+    debugAuth('pkce.redirect-to-login', {
+        auth_origin: parsed_url.origin,
+        auth_path: parsed_url.pathname,
+        redirect_uri: parsed_url.searchParams.get('redirect_uri'),
+        has_app_id: Boolean(parsed_url.searchParams.get('app_id')),
+        is_signup: Boolean(options.isSignup),
+        account: options.account || null,
+    });
     debugDeriv('pkce redirect', {
         auth_origin: parsed_url.origin,
         auth_path: parsed_url.pathname,

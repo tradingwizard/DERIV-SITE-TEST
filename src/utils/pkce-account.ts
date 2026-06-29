@@ -1,5 +1,6 @@
 import Cookies from 'js-cookie';
 import { fetchAccounts, isVirtualAccount } from '@/external/bot-skeleton/services/api/deriv-rest';
+import { debugAuth } from '@/utils/auth-debug';
 import { exchangeCodeForToken } from '@/utils/pkce';
 
 type CompletePkceLoginParams = {
@@ -22,8 +23,11 @@ const setLoggedStateCookie = (value: 'true' | 'false') => {
 };
 
 export const completePkceLogin = async ({ code, redirectUri, requestedAccount }: CompletePkceLoginParams) => {
+    debugAuth('pkce-account.exchange-started', { redirect_uri: redirectUri, requested_account: requestedAccount || null });
     const access_token = await exchangeCodeForToken(code, redirectUri);
     const accounts = await fetchAccounts(access_token);
+
+    debugAuth('pkce-account.accounts-fetched', { accounts_count: accounts.length });
 
     if (!accounts.length) {
         throw new Error('No trading accounts were found for this login.');
@@ -66,9 +70,16 @@ export const completePkceLogin = async ({ code, redirectUri, requestedAccount }:
     localStorage.setItem('mesoflix_account_v2', 'true');
     setLoggedStateCookie('true');
 
+    debugAuth('pkce-account.completed', {
+        selected_account: active.account_id,
+        selected_account_type: active.account_type,
+        selected_currency: isVirtualAccount(active) ? 'demo' : active.currency || 'USD',
+    });
+
     return isVirtualAccount(active) ? 'demo' : active.currency || 'USD';
 };
 
 export const markPkceLoginFailed = () => {
+    debugAuth('pkce-account.mark-login-failed');
     setLoggedStateCookie('false');
 };
