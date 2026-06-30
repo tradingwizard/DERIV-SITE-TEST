@@ -49,7 +49,7 @@ const sha256 = async (input: string): Promise<Uint8Array> => {
     return new Uint8Array(digest);
 };
 
-export const getOAuthRedirectUri = (): string => `${window.location.origin}/`;
+export const getOAuthRedirectUri = (): string => window.location.origin;
 
 export const getOAuthCallbackRedirectUri = (): string => `${window.location.origin}/callback`;
 
