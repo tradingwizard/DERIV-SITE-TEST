@@ -4,6 +4,8 @@ import { localize } from '@deriv-com/translations';
 import { observer as globalObserver } from '../../../utils/observer';
 import { error as logError } from './broadcast';
 
+const isLegacy = () => typeof localStorage !== 'undefined' && localStorage.getItem('is_legacy_account') === 'true';
+
 export const tradeOptionToProposal = (trade_option, purchase_reference) =>
     trade_option.contractTypes.map(type => {
         const proposal = {
@@ -19,8 +21,12 @@ export const tradeOptionToProposal = (trade_option, purchase_reference) =>
                 purchase_reference,
             },
             proposal: 1,
-            symbol: trade_option.symbol,
         };
+        if (isLegacy()) {
+            proposal.symbol = trade_option.symbol;
+        } else {
+            proposal.underlying_symbol = trade_option.symbol;
+        }
         if (trade_option.prediction !== undefined) {
             proposal.selected_tick = trade_option.prediction;
         }
@@ -54,9 +60,13 @@ export const tradeOptionToBuy = (contract_type, trade_option) => {
             duration: trade_option.duration,
             duration_unit: trade_option.duration_unit,
             multiplier: trade_option.multiplier,
-            symbol: trade_option.symbol,
         },
     };
+    if (isLegacy()) {
+        buy.parameters.symbol = trade_option.symbol;
+    } else {
+        buy.parameters.underlying_symbol = trade_option.symbol;
+    }
     if (trade_option.prediction !== undefined) {
         buy.parameters.selected_tick = trade_option.prediction;
     }
