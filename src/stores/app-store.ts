@@ -10,6 +10,7 @@ import {
 import { api_base, ApiHelpers, DBot, runIrreversibleEvents } from '@/external/bot-skeleton';
 import { setCurrency } from '@/external/bot-skeleton/scratch/utils';
 import { TApiHelpersStore } from '@/types/stores.types';
+import { getAuthSessionState } from '@/utils/auth-session';
 import { localize } from '@deriv-com/translations';
 import RootStore from './root-store';
 
@@ -89,11 +90,10 @@ export default class AppStore {
         // Check if we're in the process of logging in
         // When isSingleLoggingIn is true, we don't want to show the EU error message
         const is_tmb_enabled = window.is_tmb_enabled === true;
+        const { hasValidSession } = getAuthSessionState();
         const isSingleLoggingIn =
             window.location.pathname === '/callback' ||
-            (Cookies.get('logged_state') === 'true' &&
-                !is_tmb_enabled &&
-                Object.keys(JSON.parse(localStorage.getItem('accountsList') || '{}')).length === 0);
+            (Cookies.get('logged_state') === 'true' && !is_tmb_enabled && !hasValidSession);
 
         if (isSingleLoggingIn) {
             common.setError(false, {});

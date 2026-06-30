@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import RootStore from '@/stores/root-store';
 import { debugAuth } from '@/utils/auth-debug';
+import { getAuthSessionState } from '@/utils/auth-session';
 import { clearAuthData } from '@/utils/auth-utils';
 import { redirectToLogin } from '@/utils/pkce';
 import { Analytics } from '@deriv-com/analytics';
@@ -26,8 +27,7 @@ export const useOauth2 = ({
     client?: RootStore['client'];
 } = {}) => {
     const [isSingleLoggingIn, setIsSingleLoggingIn] = useState(false);
-    const accountsList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-    const isClientAccountsPopulated = Object.keys(accountsList).length > 0;
+    const { hasLegacySession, hasPkceSession, hasValidSession } = getAuthSessionState();
     const isSilentLoginExcluded =
         window.location.pathname.includes('callback') || window.location.pathname.includes('endpoint');
 
@@ -42,12 +42,14 @@ export const useOauth2 = ({
     }, []);
 
     useEffect(() => {
-        const willEventuallySSO = loggedState === 'true' && !isClientAccountsPopulated;
-        const willEventuallySLO = loggedState === 'false' && isClientAccountsPopulated;
+        const willEventuallySSO = loggedState === 'true' && !hasValidSession;
+        const willEventuallySLO = loggedState === 'false' && hasValidSession;
 
         debugAuth('oauth2.login-state-check', {
             logged_state: loggedState || null,
-            is_client_accounts_populated: isClientAccountsPopulated,
+            has_legacy_session: hasLegacySession,
+            has_pkce_session: hasPkceSession,
+            has_valid_session: hasValidSession,
             will_eventually_sso: willEventuallySSO,
             will_eventually_slo: willEventuallySLO,
             is_silent_login_excluded: isSilentLoginExcluded,
@@ -58,7 +60,7 @@ export const useOauth2 = ({
         } else {
             setIsSingleLoggingIn(false);
         }
-    }, [isClientAccountsPopulated, loggedState, isSilentLoginExcluded]);
+    }, [hasValidSession, hasLegacySession, hasPkceSession, loggedState, isSilentLoginExcluded]);
 
     const logoutHandler = async () => {
         debugAuth('oauth2.logout-attempted', {

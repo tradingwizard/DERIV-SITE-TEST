@@ -9,6 +9,7 @@ import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { debugAuth } from '@/utils/auth-debug';
+import { getAuthSessionState } from '@/utils/auth-session';
 import { redirectToLogin } from '@/utils/pkce';
 import { useDevice } from '@deriv-com/ui';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '../shared';
@@ -35,8 +36,7 @@ const Layout = observer(() => {
     const checkClientAccount = JSON.parse(localStorage.getItem('clientAccounts') ?? '{}');
     const getQueryParams = new URLSearchParams(window.location.search);
     const currency = getQueryParams.get('account') ?? '';
-    const accountsList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-    const isClientAccountsPopulated = Object.keys(accountsList).length > 0;
+    const { accountsList, hasLegacySession, hasPkceSession, hasValidSession } = getAuthSessionState();
     const ifClientAccountHasCurrency =
         Object.values(checkClientAccount).some((account: any) => account.currency === currency) ||
         currency === 'demo' ||
@@ -84,7 +84,7 @@ const Layout = observer(() => {
             let missingTokenCurrency = '';
 
             for (const acc of account_list_filter) {
-                if (acc.loginid && !accountsList[acc.loginid]) {
+                if (!hasPkceSession && acc.loginid && !accountsList[acc.loginid]) {
                     hasMissingToken = true;
                     missingTokenCurrency = acc.currency || '';
                     // Store the missing token's currency in session storage
@@ -139,7 +139,7 @@ const Layout = observer(() => {
 
         const checkOIDCEnabledWithMissingAccount = !isEndpointPage && !isCallbackPage && !clientHasCurrency;
         const shouldAuthenticate =
-            (isLoggedInCookie && !isClientAccountsPopulated && !isEndpointPage && !isCallbackPage) ||
+            (isLoggedInCookie && !hasValidSession && !isEndpointPage && !isCallbackPage) ||
             checkOIDCEnabledWithMissingAccount;
 
         // Skip authentication when offline
@@ -172,6 +172,8 @@ const Layout = observer(() => {
                         debugAuth('layout.redirect-to-login', {
                             source: 'Layout.shouldAuthenticate',
                             account: query_param_currency,
+                            has_legacy_session: hasLegacySession,
+                            has_pkce_session: hasPkceSession,
                         });
                         await redirectToLogin({ account: query_param_currency });
                     } catch (err) {
@@ -190,7 +192,9 @@ const Layout = observer(() => {
         })();
     }, [
         isLoggedInCookie,
-        isClientAccountsPopulated,
+        hasValidSession,
+        hasLegacySession,
+        hasPkceSession,
         isEndpointPage,
         isCallbackPage,
         clientHasCurrency,
